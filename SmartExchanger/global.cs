@@ -1,0 +1,9 @@
+﻿global using System;
+global using System.Collections.Generic;
+global using System.Text;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Hosting;
+global using System.Windows;
+global using SmartExchanger.Views;
+global using SmartExchanger.ViewModels;
+global using Microsoft.Extensions.Http;

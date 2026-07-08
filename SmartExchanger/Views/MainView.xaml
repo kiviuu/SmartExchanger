@@ -1,0 +1,50 @@
+﻿<Window x:Class="SmartExchanger.Views.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:nodify="https://miroiu.github.io/nodify"
+        xmlns:vm="clr-namespace:SmartExchanger.ViewModels"
+        xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes"
+        Title="Procedural Texture Generator" Height="600" Width="900"
+        Background="#1E1E1E">
+
+    <Window.DataContext>
+        <vm:EditorViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <nodify:NodifyEditor ItemsSource="{Binding Nodes}" 
+                             Connections="{Binding Connections}"
+                             GridCellSize="15"
+                             Background="#2D2D30">
+
+            <nodify:NodifyEditor.ConnectionTemplate>
+                <DataTemplate DataType="{x:Type vm:ConnectionViewModel}">
+                    <nodify:CircuitConnection Source="{Binding Source.Location}" 
+                                              Target="{Binding Target.Location}" />
+                </DataTemplate>
+            </nodify:NodifyEditor.ConnectionTemplate>
+
+            <nodify:NodifyEditor.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:BaseNodeViewModel}">
+                    <nodify:Node Location="{Binding Location}" Header="{Binding Title}">
+
+                        <StackPanel Margin="10">
+
+                            <TextBlock Text="Generates Texture" Foreground="Gray" 
+                                       Visibility="{Binding Converter={StaticResource TypeToVisibilityConverter}, ConverterParameter={x:Type nodes:ColorNodeViewModel}}" />
+
+                            <Border BorderBrush="Black" BorderThickness="2" CornerRadius="4">
+                                <Image Source="{Binding RenderedImage}" 
+                                       Width="128" Height="128" Stretch="Uniform"
+                                       Visibility="{Binding Converter={StaticResource TypeToVisibilityConverter}, ConverterParameter={x:Type nodes:OutputNodeViewModel}}" />
+                            </Border>
+
+                        </StackPanel>
+
+                    </nodify:Node>
+                </DataTemplate>
+            </nodify:NodifyEditor.ItemTemplate>
+
+        </nodify:NodifyEditor>
+    </Grid>
+</Window>
