@@ -1,14 +1,20 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using SmartExchanger.ViewModels.Nodes;
 
 namespace SmartExchanger.ViewModels
 {
-    // Reprsents connection between two nodes in the Nodify graph
     public partial class ConnectionViewModel : ObservableObject
     {
         [ObservableProperty]
-        private BaseNodeViewModel? _source;
+        private ConnectorViewModel _source;
 
         [ObservableProperty]
-        private BaseNodeViewModel? _target;
+        private ConnectorViewModel _target;
+
+        public ConnectionViewModel(ConnectorViewModel source, ConnectorViewModel target)
+        {
+            _source = source;
+            _target = target;
+        }
     }
 }

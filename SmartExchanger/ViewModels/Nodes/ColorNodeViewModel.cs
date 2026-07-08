@@ -1,24 +1,53 @@
-﻿using SkiaSharp;
-using SmartExchanger.Helpers;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using SkiaSharp;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace SmartExchanger.ViewModels.Nodes
 {
+    // starting node
     public partial class ColorNodeViewModel : BaseNodeViewModel
     {
+        [ObservableProperty]
+        private byte _r = 128;
+
+        [ObservableProperty]
+        private byte _g = 0;
+
+        [ObservableProperty]
+        private byte _b = 128;
+
+        public SolidColorBrush ColorBrush => new SolidColorBrush(Color.FromRgb(R, G, B));
+
+        public event Action? PropsChanged;
         public ColorNodeViewModel()
         {
-            Title = "Solid Color Generator";
-            Process();
+            Title = "Color Node";
+            Outputs.Add(new ConnectorViewModel(this, "Out"));
+            CurrentTexture = new SKBitmap(256, 256);
+            ProcessNode();
         }
-        public override void Process()
+
+        partial void OnRChanged(byte value) => NotifyColorUpdate();
+        partial void OnGChanged(byte value) => NotifyColorUpdate();
+        partial void OnBChanged(byte value) => NotifyColorUpdate();
+
+        private void NotifyColorUpdate()
         {
-            var bitmap = TextureHelper.CreateEmptyBitmap();
+            OnPropertyChanged(nameof(ColorBrush));
+            PropsChanged?.Invoke();
+            ProcessNode();
+        }
 
-            using var canvas = new SKCanvas(bitmap);
+        public override void ProcessNode()
+        {
+            using var canvas = new SKCanvas(CurrentTexture);
+            canvas.Clear(new SKColor(R, G, B));
+        }
 
-            canvas.Clear(new SKColor(138, 43, 226));
-
-            OutputTexture = bitmap;
+        public override void ClearNode()
+        {
+            return;
         }
     }
 }

@@ -4,47 +4,68 @@
         xmlns:nodify="https://miroiu.github.io/nodify"
         xmlns:vm="clr-namespace:SmartExchanger.ViewModels"
         xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes"
-        Title="Procedural Texture Generator" Height="600" Width="900"
+        Title="Smart Exchanger" Height="650" Width="950"
+        ResizeMode="CanResize"
         Background="#1E1E1E">
-
-    <Window.DataContext>
-        <vm:EditorViewModel />
-    </Window.DataContext>
-
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/NodeTemplates.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <Grid>
-        <nodify:NodifyEditor ItemsSource="{Binding Nodes}" 
-                             Connections="{Binding Connections}"
-                             GridCellSize="15"
-                             Background="#2D2D30">
+        <nodify:NodifyEditor DataContext="{Binding Editor}"
+                     ItemsSource="{Binding Nodes}" 
+                     Connections="{Binding Connections}"
+                     SelectedConnections="{Binding SelectedConnections}"
+                     ConnectionStartedCommand="{Binding StartConnectionCommand}"
+                     ConnectionCompletedCommand="{Binding CompleteConnectionCommand}"
+                     DisconnectConnectorCommand="{Binding DisconnectConnectorCommand}"
+                     GridCellSize="15"
+                     Background="#151515"
+                     Tag="{Binding}">
+            <nodify:NodifyEditor.InputBindings>
+                <KeyBinding Key="Delete" Command="{Binding DeleteSelectionCommand}" />
+            </nodify:NodifyEditor.InputBindings>
+            <nodify:NodifyEditor.ItemContainerStyle>
+                <Style TargetType="{x:Type nodify:ItemContainer}">
+                    <Setter Property="Location" Value="{Binding Location, Mode=TwoWay}" />
+                </Style>
+            </nodify:NodifyEditor.ItemContainerStyle>
 
             <nodify:NodifyEditor.ConnectionTemplate>
                 <DataTemplate DataType="{x:Type vm:ConnectionViewModel}">
-                    <nodify:CircuitConnection Source="{Binding Source.Location}" 
-                                              Target="{Binding Target.Location}" />
+                    <nodify:CircuitConnection Source="{Binding Source.Anchor}" 
+                                              Target="{Binding Target.Anchor}" />
                 </DataTemplate>
             </nodify:NodifyEditor.ConnectionTemplate>
 
-            <nodify:NodifyEditor.ItemTemplate>
-                <DataTemplate DataType="{x:Type vm:BaseNodeViewModel}">
-                    <nodify:Node Location="{Binding Location}" Header="{Binding Title}">
 
-                        <StackPanel Margin="10">
+            <nodify:NodifyEditor.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Create Node">
+                        <MenuItem Header="Start Node">
+                            <MenuItem Header="Color Node"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.ColorNode}"/>
+                        </MenuItem>
 
-                            <TextBlock Text="Generates Texture" Foreground="Gray" 
-                                       Visibility="{Binding Converter={StaticResource TypeToVisibilityConverter}, ConverterParameter={x:Type nodes:ColorNodeViewModel}}" />
+                        <MenuItem Header="Middle Node">
+                            <MenuItem Header="Perlin Noise Fractal Node"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.PerlinNoiseNode}"/>
+                        </MenuItem>
 
-                            <Border BorderBrush="Black" BorderThickness="2" CornerRadius="4">
-                                <Image Source="{Binding RenderedImage}" 
-                                       Width="128" Height="128" Stretch="Uniform"
-                                       Visibility="{Binding Converter={StaticResource TypeToVisibilityConverter}, ConverterParameter={x:Type nodes:OutputNodeViewModel}}" />
-                            </Border>
+                        <MenuItem Header="End Node">
+                            <MenuItem Header="Output Node"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.OutputNode}"/>
+                        </MenuItem>
+                    </MenuItem>
 
-                        </StackPanel>
-
-                    </nodify:Node>
-                </DataTemplate>
-            </nodify:NodifyEditor.ItemTemplate>
-
+                </ContextMenu>
+            </nodify:NodifyEditor.ContextMenu>
         </nodify:NodifyEditor>
     </Grid>
 </Window>

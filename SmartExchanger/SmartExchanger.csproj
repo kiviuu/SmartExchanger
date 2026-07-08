@@ -28,14 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Helpers\" />
+    <Folder Include="Models\" />
     <Folder Include="Repositories\" />
     <Folder Include="Services\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="ViewModels\EditorViewModel.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Compile>
   </ItemGroup>
 
 </Project>

@@ -1,25 +1,35 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System.Windows.Media.Imaging;
 using SkiaSharp.Views.WPF;
+using System.Drawing;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace SmartExchanger.ViewModels.Nodes
 {
+    // contain final render resul - ending Node
     public partial class OutputNodeViewModel : BaseNodeViewModel
     {
-        [ObservableProperty]
-        private BitmapSource? _renderedImage;
+        //[ObservableProperty]
+        //private SolidColorBrush _inputBrush = new SolidColorBrush(Colors.Transparent);
 
-        public BaseNodeViewModel? InputNode { get; set; }
+        [ObservableProperty]
+        private WriteableBitmap? _resultTexture;
         public OutputNodeViewModel()
         {
-            Title = "Texture Output";
+            Title = "Output Node";
+            Inputs.Add(new ConnectorViewModel(this, "In"));
+            ProcessNode();
         }
-        public override void Process()
+
+        public override void ProcessNode()
         {
-            if (InputNode?.OutputTexture is not null)
-            {
-                RenderedImage = InputNode.OutputTexture.ToWriteableBitmap();
-            }
+            ResultTexture = CurrentTexture?.ToWriteableBitmap();
+        }
+
+        public override void ClearNode()
+        {
+            ResultTexture = null;
+            CurrentTexture = null;
         }
     }
 }
