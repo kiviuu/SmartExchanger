@@ -55,6 +55,9 @@
                             <MenuItem Header="Perlin Noise Fractal Node"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.PerlinNoiseNode}"/>
+                            <MenuItem Header="Blend Node"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.BlendNode}" />
                         </MenuItem>
 
                         <MenuItem Header="End Node">

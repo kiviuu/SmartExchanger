@@ -173,4 +173,60 @@
             </Border>
         </nodify:Node>
     </DataTemplate>
+
+
+    <DataTemplate DataType="{x:Type nodes:BlendNodeViewModel}">
+        <nodify:Node Header="{Binding Title}" 
+                     Input="{Binding Inputs}" 
+                     Output="{Binding Outputs}"
+                     Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete" 
+                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
+                              CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}" 
+                                      Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                                      IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}" 
+                                       Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                                       IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+
+            <StackPanel Width="180" Margin="8">
+                <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Mode" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="1"
+                              Margin="10,0,0,0"
+                              ItemsSource="{Binding AvailableBlendModes}"
+                              SelectedItem="{Binding SelectedBlendMode}"
+                              />
+                </Grid>
+                <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Factor" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Factor, Mode=TwoWay}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
+                </Grid>
+            </StackPanel>
+        </nodify:Node>
+    </DataTemplate>
 </ResourceDictionary>

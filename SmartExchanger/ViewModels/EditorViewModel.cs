@@ -88,11 +88,11 @@ namespace SmartExchanger.ViewModels
 
         private void RecalculateGraph()
         {
-            //var outputNodes = Nodes.OfType<OutputNodeViewModel>();
-            //foreach (var outNode in outputNodes)
-            //{
-            //    outNode.ResultTexture = null;
-            //}
+            ////var outputNodes = Nodes.OfType<OutputNodeViewModel>();
+            ////foreach (var outNode in outputNodes)
+            ////{
+            ////    outNode.ResultTexture = null;
+            ////}
             foreach (var node in Nodes)
             {
                 foreach (var input in node.Inputs)
@@ -102,17 +102,20 @@ namespace SmartExchanger.ViewModels
                     output.IsConnected = Connections.Any(c => c.Source == output);
             }
 
-            //// clearing
-            //foreach (var node in Nodes.OfType<OutputNodeViewModel>()) { node.CurrentTexture = null; }
-            //foreach (var node in Nodes.OfType<PerlinNoiseFractalNodeViewModel>()) { node.InputTexture = null; }
+            ////// clearing
+            ////foreach (var node in Nodes.OfType<OutputNodeViewModel>()) { node.CurrentTexture = null; }
+            ////foreach (var node in Nodes.OfType<PerlinNoiseFractalNodeViewModel>()) { node.InputTexture = null; }
 
-            foreach(var node in Nodes)
-            {
-                node.ClearNode();
-            }
+            //foreach(var node in Nodes)
+            //{
+            //    node.ClearNode();
+            //}
 
 
-            var sortedConnections = Connections.OrderBy(c => c.Source.Node is ColorNodeViewModel ? 0 : 1).ToList();
+            //var sortedConnections = Connections.OrderBy(c => c.Source.Node is ColorNodeViewModel ? 0 : 1).ToList();
+            var sortedNodes = GetTopologicallySortedNodes();
+            var nodeOrder = sortedNodes.Select((node, idx) => new { node, idx }).ToDictionary(x => x.node, x => x.idx);
+            var sortedConnections = Connections.OrderBy(c => nodeOrder.TryGetValue(c.Source.Node, out var idx) ? idx : 0).ToList();
 
             foreach (var connection in sortedConnections)
             {
@@ -130,6 +133,18 @@ namespace SmartExchanger.ViewModels
                     {
                         targetPerlin.InputTexture = sourceNode.CurrentTexture;
                         targetPerlin.ProcessNode();
+                    }
+                    else if (targetNode is BlendNodeViewModel targetBlend)
+                    {
+                        if (connection.Target.Title == "A")
+                        {
+                            targetBlend.InputTextureA = sourceNode.CurrentTexture;
+                        }
+                        if (connection.Target.Title == "B")
+                        {
+                            targetBlend.InputTextureB = sourceNode.CurrentTexture;
+                        }
+                        targetBlend.ProcessNode();
                     }
                 }
             }
@@ -155,6 +170,7 @@ namespace SmartExchanger.ViewModels
                 NodeType.ColorNode => new ColorNodeViewModel(),
                 NodeType.PerlinNoiseNode => new PerlinNoiseFractalNodeViewModel(),
                 NodeType.OutputNode => new OutputNodeViewModel(),
+                NodeType.BlendNode => new BlendNodeViewModel(),
                 _ => throw new ArgumentException("Unknow node type")
             };
 
@@ -176,6 +192,39 @@ namespace SmartExchanger.ViewModels
             node.PropsChanged -= RecalculateGraph;
             Nodes.Remove(node);
             RecalculateGraph();
+        }
+
+        private List<BaseNodeViewModel> GetTopologicallySortedNodes()
+        {
+            var sorted = new List<BaseNodeViewModel>();
+            var visited = new Dictionary<BaseNodeViewModel, bool>();
+            foreach (var node in Nodes)
+            {
+                if (!visited.ContainsKey(node))
+                {
+                    VisitNode(node, visited, sorted);
+                }
+            }
+            return sorted;
+        }
+        private void VisitNode(BaseNodeViewModel node, Dictionary<BaseNodeViewModel, bool> visited, List<BaseNodeViewModel> sorted)
+        {
+            if (visited.TryGetValue(node, out bool isFullyVisited))
+            {
+                if (!isFullyVisited)
+                {
+                    throw new InvalidOperationException("Loop in graph detected!");
+                }
+                return;
+            }
+            visited[node] = false;
+            var parents = Connections.Where(c => c.Target.Node == node).Select(c => c.Source.Node);
+            foreach (var parent in parents)
+            {
+                VisitNode(parent, visited, sorted);
+            }
+            visited[node] = true;
+            sorted.Add(node);
         }
     }
 }

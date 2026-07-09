@@ -8,6 +8,7 @@ namespace SmartExchanger.ViewModels.Nodes
     {
         ColorNode,
         PerlinNoiseNode,
-        OutputNode
+        OutputNode,
+        BlendNode
     }
 }

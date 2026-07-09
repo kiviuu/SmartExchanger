@@ -30,7 +30,9 @@ namespace SmartExchanger.ViewModels.Nodes
                 e.PropertyName != nameof(Title) &&
                 e.PropertyName != "CurrentTexture" &&
                 e.PropertyName != "ResultTexture" &&
-                e.PropertyName != "InputTexture")
+                e.PropertyName != "InputTexture" &&
+                e.PropertyName != "InputTextureA" &&
+                e.PropertyName != "InputTextureB")
             {
                 PropsChanged?.Invoke();
             }
