@@ -27,7 +27,7 @@ namespace SmartExchanger.ViewModels.Nodes
             Inputs.Add(new ConnectorViewModel(this, "A"));
             Inputs.Add(new ConnectorViewModel(this, "B"));
             Outputs.Add(new ConnectorViewModel(this, "Out"));
-            ProcessNode();
+            //ProcessNode();
         }
         public override void ClearNode()
         {
@@ -35,8 +35,14 @@ namespace SmartExchanger.ViewModels.Nodes
             InputTextureB = null;
         }
 
-        public override void ProcessNode()
+        public override void ProcessNode(int size)
         {
+            if (CurrentTexture is null || CurrentTexture.Width != size || CurrentTexture.Height != size)
+            {
+                CurrentTexture?.Dispose();
+                CurrentTexture = new SKBitmap(size, size);
+            }
+
             var referenceTexture = InputTextureA ?? InputTextureB;
 
             if (referenceTexture == null)
@@ -68,6 +74,7 @@ namespace SmartExchanger.ViewModels.Nodes
                 paint.BlendMode = SelectedBlendMode;
                 canvas.DrawBitmap(InputTextureB, new SKPoint(0,0), new SKSamplingOptions(), paint);
             }
+            OnPropertyChanged(nameof(CurrentTexture));
         }
 
         partial void OnFactorChanged(float value) => NotifyInputChanged();
@@ -75,7 +82,7 @@ namespace SmartExchanger.ViewModels.Nodes
         private void NotifyInputChanged()
         {
             PropsChanged?.Invoke();
-            ProcessNode();
+            //ProcessNode();
         }
 
     }

@@ -14,7 +14,7 @@ namespace SmartExchanger
                 .ConfigureServices((context, services) =>
                 {
                     // Add other services as needed
-                    //services.Configure<Models.ApiSettings>(context.Configuration.GetSection("CurrencyApi"));
+                    services.Configure<Models.AppSettingsModel>(context.Configuration.GetSection("Default"));
                     //services.AddHttpClient<Repositories.CurrencyRepository>((sp, client) =>
                     //{
                     //    var config = sp.GetRequiredService<IOptions<Models.ApiSettings>>().Value;

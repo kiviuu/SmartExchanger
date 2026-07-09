@@ -95,7 +95,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Freq X" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyX, Mode=TwoWay}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyX, Mode=TwoWay, Delay=150}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
                 </Grid>
 
                 <Grid Margin="0,2">
@@ -104,7 +104,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Freq Y" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyY, Mode=TwoWay}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyY, Mode=TwoWay, Delay=150}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
                 </Grid>
 
                 <Grid Margin="0,2">
@@ -113,7 +113,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Seed"  FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding Seed, Mode=TwoWay}" TickFrequency="0.05" IsSnapToTickEnabled="True"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding Seed, Mode=TwoWay, Delay=150}" TickFrequency="0.05" IsSnapToTickEnabled="True"/>
                 </Grid>
 
                 <Grid Margin="0,2">
@@ -122,7 +122,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Octaves"  FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="5" Value="{Binding Octaves, Mode=TwoWay}" TickFrequency="1" IsSnapToTickEnabled="True"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="5" Value="{Binding Octaves, Mode=TwoWay, Delay=150}" TickFrequency="1" IsSnapToTickEnabled="True"/>
                 </Grid>
             </StackPanel>
         </nodify:Node>
@@ -224,8 +224,37 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Factor" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Factor, Mode=TwoWay}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Factor, Mode=TwoWay, Delay=150}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
                 </Grid>
+            </StackPanel>
+        </nodify:Node>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type nodes:TextureSizeNodeViewModel}">
+        <nodify:Node Header="{Binding Title}" 
+                     Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete" 
+                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
+                              CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <StackPanel Width="160" Margin="8">
+                <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Size" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="1" 
+                              Margin="10,0,0,0" 
+                              ItemsSource="{Binding AvailableSizes}" 
+                              SelectedItem="{Binding SelectedSize, Mode=TwoWay}"/>
+                </Grid>
+                <TextBlock Text="px (Square)" Foreground="#777" FontSize="10" Margin="60,2,0,0"/>
             </StackPanel>
         </nodify:Node>
     </DataTemplate>

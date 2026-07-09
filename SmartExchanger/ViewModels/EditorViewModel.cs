@@ -31,6 +31,9 @@ namespace SmartExchanger.ViewModels
             //Nodes.Add(colorNode);
             //Nodes.Add(outputNode);
             //Nodes.Add(perlinNoiseNode);
+            var textureSizeNode = new TextureSizeNodeViewModel { Location = new Point(0, 0) };
+            textureSizeNode.PropsChanged += RecalculateGraph;
+            Nodes.Add(textureSizeNode);
         }
 
         [RelayCommand]
@@ -102,6 +105,9 @@ namespace SmartExchanger.ViewModels
                     output.IsConnected = Connections.Any(c => c.Source == output);
             }
 
+            var sizeNode = Nodes.OfType<TextureSizeNodeViewModel>().FirstOrDefault();
+            int currentSize = sizeNode?.SelectedSize ?? 512;
+
             ////// clearing
             ////foreach (var node in Nodes.OfType<OutputNodeViewModel>()) { node.CurrentTexture = null; }
             ////foreach (var node in Nodes.OfType<PerlinNoiseFractalNodeViewModel>()) { node.InputTexture = null; }
@@ -114,39 +120,62 @@ namespace SmartExchanger.ViewModels
 
             //var sortedConnections = Connections.OrderBy(c => c.Source.Node is ColorNodeViewModel ? 0 : 1).ToList();
             var sortedNodes = GetTopologicallySortedNodes();
-            var nodeOrder = sortedNodes.Select((node, idx) => new { node, idx }).ToDictionary(x => x.node, x => x.idx);
-            var sortedConnections = Connections.OrderBy(c => nodeOrder.TryGetValue(c.Source.Node, out var idx) ? idx : 0).ToList();
+            //var nodeOrder = sortedNodes.Select((node, idx) => new { node, idx }).ToDictionary(x => x.node, x => x.idx);
+            //var sortedConnections = Connections.OrderBy(c => nodeOrder.TryGetValue(c.Source.Node, out var idx) ? idx : 0).ToList();
 
-            foreach (var connection in sortedConnections)
+            //foreach (var connection in sortedConnections)
+            //{
+            //    var sourceNode = connection.Source.Node;
+            //    var targetNode = connection.Target.Node;
+
+            //    if (sourceNode.CurrentTexture != null)
+            //    {
+            //        if (targetNode is OutputNodeViewModel targetOutput)
+            //        {
+            //            targetOutput.CurrentTexture = sourceNode.CurrentTexture;
+            //            targetOutput.ProcessNode(currentSize);
+            //        }
+            //        else if (targetNode is PerlinNoiseFractalNodeViewModel targetPerlin)
+            //        {
+            //            targetPerlin.InputTexture = sourceNode.CurrentTexture;
+            //            targetPerlin.ProcessNode(currentSize);
+            //        }
+            //        else if (targetNode is BlendNodeViewModel targetBlend)
+            //        {
+            //            if (connection.Target.Title == "A")
+            //            {
+            //                targetBlend.InputTextureA = sourceNode.CurrentTexture;
+            //            }
+            //            if (connection.Target.Title == "B")
+            //            {
+            //                targetBlend.InputTextureB = sourceNode.CurrentTexture;
+            //            }
+            //            targetBlend.ProcessNode(currentSize);
+            //        }
+            //    }
+            //}
+            foreach (var node in sortedNodes)
             {
-                var sourceNode = connection.Source.Node;
-                var targetNode = connection.Target.Node;
-
-                if (sourceNode.CurrentTexture != null)
+                var incomingConnections = Connections.Where(c => c.Target.Node == node);
+                foreach (var conn in incomingConnections)
                 {
-                    if (targetNode is OutputNodeViewModel targetOutput)
+                    var sourceTexture = conn.Source.Node.CurrentTexture;
+
+                    if (node is OutputNodeViewModel targetOutput)
                     {
-                        targetOutput.CurrentTexture = sourceNode.CurrentTexture;
-                        targetOutput.ProcessNode();
+                        targetOutput.CurrentTexture = sourceTexture;
                     }
-                    else if (targetNode is PerlinNoiseFractalNodeViewModel targetPerlin)
+                    else if (node is PerlinNoiseFractalNodeViewModel targetPerlin)
                     {
-                        targetPerlin.InputTexture = sourceNode.CurrentTexture;
-                        targetPerlin.ProcessNode();
+                        targetPerlin.InputTexture = sourceTexture;
                     }
-                    else if (targetNode is BlendNodeViewModel targetBlend)
+                    else if (node is BlendNodeViewModel targetBlend)
                     {
-                        if (connection.Target.Title == "A")
-                        {
-                            targetBlend.InputTextureA = sourceNode.CurrentTexture;
-                        }
-                        if (connection.Target.Title == "B")
-                        {
-                            targetBlend.InputTextureB = sourceNode.CurrentTexture;
-                        }
-                        targetBlend.ProcessNode();
+                        if (conn.Target.Title == "A") targetBlend.InputTextureA = sourceTexture;
+                        if (conn.Target.Title == "B") targetBlend.InputTextureB = sourceTexture;
                     }
                 }
+                node.ProcessNode(currentSize);
             }
         }
 
@@ -171,6 +200,7 @@ namespace SmartExchanger.ViewModels
                 NodeType.PerlinNoiseNode => new PerlinNoiseFractalNodeViewModel(),
                 NodeType.OutputNode => new OutputNodeViewModel(),
                 NodeType.BlendNode => new BlendNodeViewModel(),
+                NodeType.TextureSizeNode => new TextureSizeNodeViewModel(),
                 _ => throw new ArgumentException("Unknow node type")
             };
 
@@ -184,6 +214,8 @@ namespace SmartExchanger.ViewModels
         private void DeleteNode(BaseNodeViewModel node)
         {
             if (node is null) return;
+            //TODO xd
+            if (node.GetType() == typeof(TextureSizeNodeViewModel)) return;
             var toRemove = Connections.Where(c => c.Source.Node == node || c.Target.Node == node).ToList();
             foreach(var conn in toRemove)
             {

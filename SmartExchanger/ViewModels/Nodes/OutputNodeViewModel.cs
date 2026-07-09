@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using SkiaSharp;
 using SkiaSharp.Views.WPF;
 using System.Drawing;
 using System.Windows.Media;
@@ -18,12 +19,18 @@ namespace SmartExchanger.ViewModels.Nodes
         {
             Title = "Output Node";
             Inputs.Add(new ConnectorViewModel(this, "In"));
-            ProcessNode();
+            //ProcessNode();
         }
 
-        public override void ProcessNode()
+        public override void ProcessNode(int size)
         {
+            if (CurrentTexture is null || CurrentTexture.Width != size || CurrentTexture.Height != size)
+            {
+                CurrentTexture?.Dispose();
+                CurrentTexture = new SKBitmap(size, size);
+            }
             ResultTexture = CurrentTexture?.ToWriteableBitmap();
+            OnPropertyChanged(nameof(CurrentTexture));
         }
 
         public override void ClearNode()
