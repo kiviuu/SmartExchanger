@@ -13,8 +13,9 @@ namespace SmartExchanger.ViewModels.Nodes
         //[ObservableProperty]
         //private SolidColorBrush _inputBrush = new SolidColorBrush(Colors.Transparent);
 
-        [ObservableProperty]
-        private WriteableBitmap? _resultTexture;
+
+        public SKImage? InputTexture { get; set; }
+        public Action? RequestRender { get; set; }
         public OutputNodeViewModel()
         {
             Title = "Output Node";
@@ -22,21 +23,25 @@ namespace SmartExchanger.ViewModels.Nodes
             //ProcessNode();
         }
 
-        public override void ProcessNode(int size)
+        public override void ProcessNode(GRContext context, int size)
         {
-            if (CurrentTexture is null || CurrentTexture.Width != size || CurrentTexture.Height != size)
+            if (context is null) return;
+            if (InputTexture is null)
             {
-                CurrentTexture?.Dispose();
-                CurrentTexture = new SKBitmap(size, size);
+                CurrentTexture = null;
+                OnPropertyChanged(nameof(CurrentTexture));
+                return;
             }
-            ResultTexture = CurrentTexture?.ToWriteableBitmap();
+            CurrentTexture = InputTexture;
+            //ResultTexture = CurrentTexture.ToWriteableBitmap();
             OnPropertyChanged(nameof(CurrentTexture));
         }
 
         public override void ClearNode()
         {
-            ResultTexture = null;
+            //ResultTexture = null;
             CurrentTexture = null;
+            InputTexture = null;
         }
     }
 }

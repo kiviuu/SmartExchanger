@@ -4,6 +4,8 @@
         xmlns:nodify="https://miroiu.github.io/nodify"
         xmlns:vm="clr-namespace:SmartExchanger.ViewModels"
         xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         Title="Smart Exchanger" Height="650" Width="950"
         ResizeMode="CanResize"
         Background="#1E1E1E">
@@ -14,6 +16,11 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Closed">
+            <i:InvokeCommandAction Command="{Binding Editor.CleanupGraphicsCommand}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <Grid>
         <nodify:NodifyEditor DataContext="{Binding Editor}"
                      ItemsSource="{Binding Nodes}" 

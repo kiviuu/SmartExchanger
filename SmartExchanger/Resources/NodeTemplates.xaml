@@ -1,7 +1,9 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:nodify="https://miroiu.github.io/nodify"
-                    xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes">
+                    xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes"
+                    xmlns:helpers="clr-namespace:SmartExchanger.Helpers"
+                    xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF">
 
     <DataTemplate DataType="{x:Type nodes:ColorNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
@@ -34,7 +36,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="R" Foreground="Red" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding R, Mode=TwoWay}" TickFrequency="1" IsSnapToTickEnabled="True"/>
+                    <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding R, Mode=TwoWay, Delay=100}" TickFrequency="1" IsSnapToTickEnabled="True"/>
                 </Grid>
 
                 <Grid Margin="0,2">
@@ -43,7 +45,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="G" Foreground="Green" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding G, Mode=TwoWay}" TickFrequency="1" IsSnapToTickEnabled="True"/>
+                    <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding G, Mode=TwoWay, Delay=100}" TickFrequency="1" IsSnapToTickEnabled="True"/>
                 </Grid>
 
                 <Grid Margin="0,2">
@@ -52,7 +54,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="B" Foreground="SkyBlue" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding B, Mode=TwoWay}" TickFrequency="1" IsSnapToTickEnabled="True"/>
+                    <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding B, Mode=TwoWay, Delay=100}" TickFrequency="1" IsSnapToTickEnabled="True"/>
                 </Grid>
             </StackPanel>
         </nodify:Node>
@@ -151,19 +153,21 @@
             </nodify:Node.InputConnectorTemplate>
 
             <Border Width="140" Height="140" Margin="8" Background="#00000000" CornerRadius="6" BorderBrush="#3F3F46" BorderThickness="2" ClipToBounds="True">
-                <Grid>
-                    <Image Source="{Binding ResultTexture}" Stretch="Uniform" />
+                <Grid Width="256" Height="256" Background="Black">
+                    <skia:SKGLElement helpers:SkiaExtensions.Editor="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}"
+                                        helpers:SkiaExtensions.OutputNode="{Binding}"
+                                        Width="256" Height="256" />
 
-                    <TextBlock Text="No Input Signal" 
-                               Foreground="#555" 
-                               HorizontalAlignment="Center" 
-                               VerticalAlignment="Center">
+                    <TextBlock Text="NO SIGNAL" 
+                                Foreground="Transparent" 
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center">
                         <TextBlock.Style>
-                            <Style TargetType="{x:Type TextBlock}">
-                                <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ResultTexture}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Visible"/>
+                                    <DataTrigger Binding="{Binding CurrentTexture}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

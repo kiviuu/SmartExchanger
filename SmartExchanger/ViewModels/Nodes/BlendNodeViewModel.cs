@@ -6,13 +6,13 @@ namespace SmartExchanger.ViewModels.Nodes
     public partial class BlendNodeViewModel : BaseNodeViewModel
     {
         [ObservableProperty]
-        private float _factor;
+        private float _factor = 0.5f;
 
         [ObservableProperty]
-        private SKBitmap? _inputTextureA;
+        private SKImage? _inputTextureA;
 
         [ObservableProperty]
-        private SKBitmap? _inputTextureB;
+        private SKImage? _inputTextureB;
 
         public event Action? PropsChanged;
 
@@ -35,34 +35,27 @@ namespace SmartExchanger.ViewModels.Nodes
             InputTextureB = null;
         }
 
-        public override void ProcessNode(int size)
+        public override void ProcessNode(GRContext context, int size)
         {
-            if (CurrentTexture is null || CurrentTexture.Width != size || CurrentTexture.Height != size)
+            if (context is null) return;
+            var refTexture = InputTextureA ?? InputTextureB;
+            if (refTexture is null)
             {
                 CurrentTexture?.Dispose();
-                CurrentTexture = new SKBitmap(size, size);
-            }
-
-            var referenceTexture = InputTextureA ?? InputTextureB;
-
-            if (referenceTexture == null)
-            {
                 CurrentTexture = null;
                 return;
             }
 
-            if (CurrentTexture == null || CurrentTexture.Width != referenceTexture.Width || CurrentTexture.Height != referenceTexture.Height)
-            {
-                CurrentTexture?.Dispose();
-                CurrentTexture = new SKBitmap(referenceTexture.Width, referenceTexture.Height);
-            }
-
-            using var canvas = new SKCanvas(CurrentTexture);
+            var info = new SKImageInfo(size, size);
+            using var surface = SKSurface.Create(context, true, info);
+            if (surface is null) return;
+            var canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
+
 
             if (InputTextureA is not null)
             {
-                canvas.DrawBitmap(InputTextureA, new SKPoint(0,0), new SKSamplingOptions());
+                canvas.DrawImage(InputTextureA, new SKPoint(0,0), new SKSamplingOptions());
             }
 
             if (InputTextureB is not null)
@@ -72,8 +65,10 @@ namespace SmartExchanger.ViewModels.Nodes
                 paint.Color = SKColors.White.WithAlpha(alpha);
                 paint.IsAntialias = true;
                 paint.BlendMode = SelectedBlendMode;
-                canvas.DrawBitmap(InputTextureB, new SKPoint(0,0), new SKSamplingOptions(), paint);
+                canvas.DrawImage(InputTextureB, new SKPoint(0,0), new SKSamplingOptions(), paint);
             }
+            CurrentTexture?.Dispose();
+            CurrentTexture = surface.Snapshot();
             OnPropertyChanged(nameof(CurrentTexture));
         }
 

@@ -14,7 +14,7 @@ namespace SmartExchanger.ViewModels.Nodes
         [ObservableProperty]
         private int _octaves = 3;
 
-        public SKBitmap? InputTexture { get; set; }
+        public SKImage? InputTexture { get; set; }
 
         public event Action? PropsChanged;
         public PerlinNoiseFractalNodeViewModel()
@@ -23,23 +23,20 @@ namespace SmartExchanger.ViewModels.Nodes
             Outputs.Add(new ConnectorViewModel(this, "Out"));
             Inputs.Add(new ConnectorViewModel(this, "In"));
 
-            CurrentTexture = new SKBitmap(1,1);
             //ProcessNode();
         }
 
-        public override void ProcessNode(int size)
+        public override void ProcessNode(GRContext context, int size)
         {
-            if (CurrentTexture is null || CurrentTexture.Width != size || CurrentTexture.Height != size)
-            {
-                CurrentTexture?.Dispose();
-                CurrentTexture = new SKBitmap(size, size);
-            }
-
-            using var canvas = new SKCanvas(CurrentTexture);
+            if (context is null) return;
+            var info = new SKImageInfo(size, size);
+            using var surface = SKSurface.Create(context, true, info);
+            if (surface is null) return;
+            var canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
             if (InputTexture is not null)
             {
-                canvas.DrawBitmap(InputTexture, new SKPoint(0, 0), new SKSamplingOptions());
+                canvas.DrawImage(InputTexture, new SKPoint(0, 0), new SKSamplingOptions());
                 //canvas.DrawBitmap(InputTexture, 0, 0);
             }
 
@@ -48,7 +45,9 @@ namespace SmartExchanger.ViewModels.Nodes
             using var shader = SKShader.CreatePerlinNoiseFractalNoise(FrequencyX, FrequencyY, Octaves, Seed);
             paint.Shader = shader;
             paint.BlendMode = SKBlendMode.Multiply;
-            canvas.DrawRect(0,0, CurrentTexture.Width, CurrentTexture.Height, paint);
+            canvas.DrawRect(0,0, size, size, paint);
+            CurrentTexture?.Dispose();
+            CurrentTexture = surface.Snapshot();
             OnPropertyChanged(nameof(CurrentTexture));
         }
 

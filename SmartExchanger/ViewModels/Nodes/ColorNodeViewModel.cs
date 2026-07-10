@@ -24,7 +24,6 @@ namespace SmartExchanger.ViewModels.Nodes
         {
             Title = "Color Node";
             Outputs.Add(new ConnectorViewModel(this, "Out"));
-            CurrentTexture = new SKBitmap(1,1);
             //ProcessNode();
         }
 
@@ -39,15 +38,15 @@ namespace SmartExchanger.ViewModels.Nodes
             //ProcessNode();
         }
 
-        public override void ProcessNode(int size)
+        public override void ProcessNode(GRContext context, int size)
         {
-            if (CurrentTexture is null || CurrentTexture.Width != size || CurrentTexture.Height != size)
-            {
-                CurrentTexture?.Dispose();
-                CurrentTexture = new SKBitmap(size, size);
-            }
-            using var canvas = new SKCanvas(CurrentTexture);
-            canvas.Clear(new SKColor(R, G, B));
+            if (context is null) return;
+            var info = new SKImageInfo(size, size);
+            using var surface = SKSurface.Create(context, true, info);
+            if (surface is null) return;
+            surface.Canvas.Clear(new SKColor(R, G, B));
+            CurrentTexture?.Dispose();
+            CurrentTexture = surface.Snapshot();
             OnPropertyChanged(nameof(CurrentTexture));
         }
 

@@ -16,8 +16,8 @@ namespace SmartExchanger.ViewModels.Nodes
         public ObservableCollection<ConnectorViewModel> Inputs { get; set; } = new();
         public ObservableCollection<ConnectorViewModel> Outputs { get; set; } = new();
 
-        public SKBitmap? CurrentTexture { get; set; }
-        public abstract void ProcessNode(int size);
+        public SKImage? CurrentTexture { get; set; }
+        public abstract void ProcessNode(GRContext context, int size);
 
         public event Action? PropsChanged;
         public abstract void ClearNode();

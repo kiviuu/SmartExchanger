@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using SkiaSharp;
 
 namespace SmartExchanger.ViewModels.Nodes
 {
@@ -17,7 +18,7 @@ namespace SmartExchanger.ViewModels.Nodes
             return;
         }
 
-        public override void ProcessNode(int size)
+        public override void ProcessNode(GRContext context, int size)
         {
             return;
         }

@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SkiaSharp;
 using SmartExchanger.ViewModels.Nodes;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using System.Xml.Linq;
 
 namespace SmartExchanger.ViewModels
 {
@@ -13,10 +15,17 @@ namespace SmartExchanger.ViewModels
         public ObservableCollection<ConnectionViewModel> SelectedConnections { get; } = new();
 
         private ConnectorViewModel? _pendingSourceConnector;
+        private GRContext? _grContext;
+        public bool IsGraphicsContextSet { get; set; } = false;
 
         public EditorViewModel()
         {
             SetupDefaultScene();
+        }
+        public void SetGraphicsContext(GRContext context)
+        {
+            _grContext = context;
+            RecalculateGraph();
         }
 
         private void SetupDefaultScene()
@@ -73,7 +82,11 @@ namespace SmartExchanger.ViewModels
             if (parameter is ConnectorViewModel connector)
             {
                 var toRemove = Connections.Where(c => c.Source == connector || c.Target == connector).ToList();
-                foreach (var conn in toRemove) Connections.Remove(conn);
+                foreach (var conn in toRemove)
+                {
+                    Connections.Remove(conn);
+                    SelectedConnections.Remove(conn);
+                }
                 RecalculateGraph();
             }
         }
@@ -84,18 +97,112 @@ namespace SmartExchanger.ViewModels
             if (parameter is ConnectionViewModel connection)
             {
                 Connections.Remove(connection);
+                SelectedConnections.Remove(connection);
                 RecalculateGraph();
             }
         }
 
 
+        //private void RecalculateGraph()
+        //{
+        //    ////var outputNodes = Nodes.OfType<OutputNodeViewModel>();
+        //    ////foreach (var outNode in outputNodes)
+        //    ////{
+        //    ////    outNode.ResultTexture = null;
+        //    ////}
+        //    foreach (var node in Nodes)
+        //    {
+        //        foreach (var input in node.Inputs)
+        //            input.IsConnected = Connections.Any(c => c.Target == input);
+
+        //        foreach (var output in node.Outputs)
+        //            output.IsConnected = Connections.Any(c => c.Source == output);
+        //    }
+
+        //    var sizeNode = Nodes.OfType<TextureSizeNodeViewModel>().FirstOrDefault();
+        //    int currentSize = sizeNode?.SelectedSize ?? 512;
+
+        //    //foreach(var node in Nodes)
+        //    //{
+        //    //    if (node.CurrentTexture is not null)
+        //    //    {
+        //    //        node.CurrentTexture.Dispose();
+        //    //    }
+        //    //    node.CurrentTexture = null;
+        //    //}
+
+        //    ////// clearing
+        //    ////foreach (var node in Nodes.OfType<OutputNodeViewModel>()) { node.CurrentTexture = null; }
+        //    ////foreach (var node in Nodes.OfType<PerlinNoiseFractalNodeViewModel>()) { node.InputTexture = null; }
+
+        //    //foreach(var node in Nodes)
+        //    //{
+        //    //    node.ClearNode();
+        //    //}
+
+
+        //    //var sortedConnections = Connections.OrderBy(c => c.Source.Node is ColorNodeViewModel ? 0 : 1).ToList();
+        //    var sortedNodes = GetTopologicallySortedNodes();
+        //    //var nodeOrder = sortedNodes.Select((node, idx) => new { node, idx }).ToDictionary(x => x.node, x => x.idx);
+        //    //var sortedConnections = Connections.OrderBy(c => nodeOrder.TryGetValue(c.Source.Node, out var idx) ? idx : 0).ToList();
+
+        //    //foreach (var connection in sortedConnections)
+        //    //{
+        //    //    var sourceNode = connection.Source.Node;
+        //    //    var targetNode = connection.Target.Node;
+
+        //    //    if (sourceNode.CurrentTexture != null)
+        //    //    {
+        //    //        if (targetNode is OutputNodeViewModel targetOutput)
+        //    //        {
+        //    //            targetOutput.CurrentTexture = sourceNode.CurrentTexture;
+        //    //            targetOutput.ProcessNode(currentSize);
+        //    //        }
+        //    //        else if (targetNode is PerlinNoiseFractalNodeViewModel targetPerlin)
+        //    //        {
+        //    //            targetPerlin.InputTexture = sourceNode.CurrentTexture;
+        //    //            targetPerlin.ProcessNode(currentSize);
+        //    //        }
+        //    //        else if (targetNode is BlendNodeViewModel targetBlend)
+        //    //        {
+        //    //            if (connection.Target.Title == "A")
+        //    //            {
+        //    //                targetBlend.InputTextureA = sourceNode.CurrentTexture;
+        //    //            }
+        //    //            if (connection.Target.Title == "B")
+        //    //            {
+        //    //                targetBlend.InputTextureB = sourceNode.CurrentTexture;
+        //    //            }
+        //    //            targetBlend.ProcessNode(currentSize);
+        //    //        }
+        //    //    }
+        //    //}
+        //    foreach (var node in sortedNodes)
+        //    {
+        //        var incomingConnections = Connections.Where(c => c.Target.Node == node);
+        //        foreach (var conn in incomingConnections)
+        //        {
+        //            var sourceTexture = conn.Source.Node.CurrentTexture;
+
+        //            if (node is OutputNodeViewModel targetOutput)
+        //            {
+        //                targetOutput.InputTexture = sourceTexture;
+        //            }
+        //            else if (node is PerlinNoiseFractalNodeViewModel targetPerlin)
+        //            {
+        //                targetPerlin.InputTexture = sourceTexture;
+        //            }
+        //            else if (node is BlendNodeViewModel targetBlend)
+        //            {
+        //                if (conn.Target.Title == "A") targetBlend.InputTextureA = sourceTexture;
+        //                if (conn.Target.Title == "B") targetBlend.InputTextureB = sourceTexture;
+        //            }
+        //        }
+        //        node.ProcessNode(_grContext, currentSize);
+        //    }
+        //}
         private void RecalculateGraph()
         {
-            ////var outputNodes = Nodes.OfType<OutputNodeViewModel>();
-            ////foreach (var outNode in outputNodes)
-            ////{
-            ////    outNode.ResultTexture = null;
-            ////}
             foreach (var node in Nodes)
             {
                 foreach (var input in node.Inputs)
@@ -104,78 +211,50 @@ namespace SmartExchanger.ViewModels
                 foreach (var output in node.Outputs)
                     output.IsConnected = Connections.Any(c => c.Source == output);
             }
+            foreach (var outNode in Nodes.OfType<OutputNodeViewModel>())
+            {
+                outNode.RequestRender?.Invoke();
+            }
+        }
 
+        // called from output nodes context
+        public void RenderGraphToCanvas(OutputNodeViewModel targetOutput, GRContext context, SKCanvas finalCanvas)
+        {
             var sizeNode = Nodes.OfType<TextureSizeNodeViewModel>().FirstOrDefault();
             int currentSize = sizeNode?.SelectedSize ?? 512;
 
-            ////// clearing
-            ////foreach (var node in Nodes.OfType<OutputNodeViewModel>()) { node.CurrentTexture = null; }
-            ////foreach (var node in Nodes.OfType<PerlinNoiseFractalNodeViewModel>()) { node.InputTexture = null; }
-
-            //foreach(var node in Nodes)
-            //{
-            //    node.ClearNode();
-            //}
-
-
-            //var sortedConnections = Connections.OrderBy(c => c.Source.Node is ColorNodeViewModel ? 0 : 1).ToList();
             var sortedNodes = GetTopologicallySortedNodes();
-            //var nodeOrder = sortedNodes.Select((node, idx) => new { node, idx }).ToDictionary(x => x.node, x => x.idx);
-            //var sortedConnections = Connections.OrderBy(c => nodeOrder.TryGetValue(c.Source.Node, out var idx) ? idx : 0).ToList();
 
-            //foreach (var connection in sortedConnections)
-            //{
-            //    var sourceNode = connection.Source.Node;
-            //    var targetNode = connection.Target.Node;
 
-            //    if (sourceNode.CurrentTexture != null)
-            //    {
-            //        if (targetNode is OutputNodeViewModel targetOutput)
-            //        {
-            //            targetOutput.CurrentTexture = sourceNode.CurrentTexture;
-            //            targetOutput.ProcessNode(currentSize);
-            //        }
-            //        else if (targetNode is PerlinNoiseFractalNodeViewModel targetPerlin)
-            //        {
-            //            targetPerlin.InputTexture = sourceNode.CurrentTexture;
-            //            targetPerlin.ProcessNode(currentSize);
-            //        }
-            //        else if (targetNode is BlendNodeViewModel targetBlend)
-            //        {
-            //            if (connection.Target.Title == "A")
-            //            {
-            //                targetBlend.InputTextureA = sourceNode.CurrentTexture;
-            //            }
-            //            if (connection.Target.Title == "B")
-            //            {
-            //                targetBlend.InputTextureB = sourceNode.CurrentTexture;
-            //            }
-            //            targetBlend.ProcessNode(currentSize);
-            //        }
-            //    }
-            //}
             foreach (var node in sortedNodes)
             {
                 var incomingConnections = Connections.Where(c => c.Target.Node == node);
                 foreach (var conn in incomingConnections)
                 {
                     var sourceTexture = conn.Source.Node.CurrentTexture;
-
-                    if (node is OutputNodeViewModel targetOutput)
-                    {
-                        targetOutput.CurrentTexture = sourceTexture;
-                    }
-                    else if (node is PerlinNoiseFractalNodeViewModel targetPerlin)
-                    {
-                        targetPerlin.InputTexture = sourceTexture;
-                    }
+                    if (node is OutputNodeViewModel outNode) outNode.InputTexture = sourceTexture;
+                    else if (node is PerlinNoiseFractalNodeViewModel targetPerlin) targetPerlin.InputTexture = sourceTexture;
                     else if (node is BlendNodeViewModel targetBlend)
                     {
                         if (conn.Target.Title == "A") targetBlend.InputTextureA = sourceTexture;
                         if (conn.Target.Title == "B") targetBlend.InputTextureB = sourceTexture;
                     }
                 }
-                node.ProcessNode(currentSize);
+
+                if (node != targetOutput)
+                {
+                    node.ProcessNode(context, currentSize);
+                }
+            }
+            if (targetOutput.InputTexture != null)
+            {
+                var rect = new SKRect(0, 0, 256, 256);
+                finalCanvas.DrawImage(targetOutput.InputTexture, rect, new SKSamplingOptions());
+            }
+            foreach (var node in Nodes)
+            {
+                node.CurrentTexture?.Dispose();
+                node.CurrentTexture = null;
             }
         }
 
@@ -214,16 +293,26 @@ namespace SmartExchanger.ViewModels
         private void DeleteNode(BaseNodeViewModel node)
         {
             if (node is null) return;
-            //TODO xd
             if (node.GetType() == typeof(TextureSizeNodeViewModel)) return;
             var toRemove = Connections.Where(c => c.Source.Node == node || c.Target.Node == node).ToList();
             foreach(var conn in toRemove)
             {
                 Connections.Remove(conn);
+                SelectedConnections.Remove(conn);
             }
+
+            node.CurrentTexture?.Dispose();
+            node.CurrentTexture = null;
+            if (node is OutputNodeViewModel outputNode)
+            {
+                outputNode.InputTexture = null;
+                outputNode.RequestRender = null;
+            }
+
             node.PropsChanged -= RecalculateGraph;
             Nodes.Remove(node);
             RecalculateGraph();
+            ForceReleaseVRAM();
         }
 
         private List<BaseNodeViewModel> GetTopologicallySortedNodes()
@@ -257,6 +346,31 @@ namespace SmartExchanger.ViewModels
             }
             visited[node] = true;
             sorted.Add(node);
+        }
+
+        [RelayCommand]
+        private void CleanupGraphics()
+        {
+            foreach (var node in Nodes)
+            {
+                node.CurrentTexture?.Dispose();
+                node.CurrentTexture = null;
+                node.ClearNode();
+            }
+            if (_grContext is not null)
+            {
+                _grContext.Dispose();
+                _grContext = null;
+            }
+        }
+
+        public void ForceReleaseVRAM()
+        {
+            if (_grContext is not null)
+            {
+                _grContext.PurgeResources();
+                _grContext.Flush();
+            }
         }
     }
 }
