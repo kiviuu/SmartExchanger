@@ -57,6 +57,12 @@ namespace SmartExchanger.Helpers
 
                 if (editor != null && outputNode != null)
                 {
+                    if (!editor.IsGraphicsContextSet)
+                    {
+                        editor.SetGraphicsContext(glElement.GRContext);
+                        editor.IsGraphicsContextSet = true;
+                    }
+
                     editor.RenderGraphToCanvas(outputNode, glElement.GRContext, canvas);
                 }
             }
@@ -67,11 +73,21 @@ namespace SmartExchanger.Helpers
             if (sender is SKGLElement glElement)
             {
                 glElement.PaintSurface -= GlControl_PaintSurface;
+                glElement.Unloaded -= GlElement_Unloaded;
+
                 var node = GetOutputNode(glElement);
                 if (node is not null)
                 {
                     node.RequestRender = null;
                 }
+
+                var editor = GetEditor(glElement);
+                if (editor != null)
+                {
+                    editor.ClearGraphicsContext();
+                }
+
+                glElement.Dispose();
             }
         }
     }

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
 using SmartExchanger.ViewModels.Nodes;
 using System.Collections.ObjectModel;
+using System.Diagnostics.Contracts;
 using System.Windows.Input;
 using System.Xml.Linq;
 
@@ -17,6 +18,7 @@ namespace SmartExchanger.ViewModels
         private ConnectorViewModel? _pendingSourceConnector;
         private GRContext? _grContext;
         public bool IsGraphicsContextSet { get; set; } = false;
+        public bool NeedsVramCleanup { get; set; } = false;
 
         public EditorViewModel()
         {
@@ -220,6 +222,12 @@ namespace SmartExchanger.ViewModels
         // called from output nodes context
         public void RenderGraphToCanvas(OutputNodeViewModel targetOutput, GRContext context, SKCanvas finalCanvas)
         {
+            if (NeedsVramCleanup && context != null)
+            {
+                context.PurgeResources();
+                NeedsVramCleanup = false;
+            }
+
             var sizeNode = Nodes.OfType<TextureSizeNodeViewModel>().FirstOrDefault();
             int currentSize = sizeNode?.SelectedSize ?? 512;
 
@@ -228,6 +236,7 @@ namespace SmartExchanger.ViewModels
 
             foreach (var node in sortedNodes)
             {
+                node.ClearNode();
                 var incomingConnections = Connections.Where(c => c.Target.Node == node);
                 foreach (var conn in incomingConnections)
                 {
@@ -303,6 +312,7 @@ namespace SmartExchanger.ViewModels
 
             node.CurrentTexture?.Dispose();
             node.CurrentTexture = null;
+            node.ClearNode();
             if (node is OutputNodeViewModel outputNode)
             {
                 outputNode.InputTexture = null;
@@ -311,8 +321,11 @@ namespace SmartExchanger.ViewModels
 
             node.PropsChanged -= RecalculateGraph;
             Nodes.Remove(node);
+
+            NeedsVramCleanup = true;
+
             RecalculateGraph();
-            ForceReleaseVRAM();
+            //ForceReleaseVRAM();
         }
 
         private List<BaseNodeViewModel> GetTopologicallySortedNodes()
@@ -357,20 +370,36 @@ namespace SmartExchanger.ViewModels
                 node.CurrentTexture = null;
                 node.ClearNode();
             }
-            if (_grContext is not null)
-            {
-                _grContext.Dispose();
-                _grContext = null;
-            }
         }
 
-        public void ForceReleaseVRAM()
+        //public void ForceReleaseVRAM()
+        //{
+        //    if (_grContext is not null)
+        //    {
+        //        _grContext.Flush();
+        //        _grContext.PurgeResources();
+        //    }
+        //}
+        public void ClearGraphicsContext()
         {
+            foreach (var node in Nodes)
+            {
+                node.CurrentTexture?.Dispose();
+                node.CurrentTexture = null;
+                node.ClearNode();
+            }
+
             if (_grContext is not null)
             {
-                _grContext.PurgeResources();
-                _grContext.Flush();
+                _grContext.PurgeUnlockedResources(true);
             }
+
+            _grContext = null;
+            IsGraphicsContextSet = false;
+
+            // only for dev - instant GC works
+            // GC.Collect();
+            //GC.WaitForPendingFinalizers();
         }
     }
 }
