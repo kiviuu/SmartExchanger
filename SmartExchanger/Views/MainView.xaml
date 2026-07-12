@@ -62,6 +62,9 @@
                             <MenuItem Header="Perlin Noise Fractal Node"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.PerlinNoiseNode}"/>
+                            <MenuItem Header="Perlin Noise Turbulence Node"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.PerlinTurbulenceNode}"/>
                             <MenuItem Header="Blend Node"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.BlendNode}" />
