@@ -301,31 +301,58 @@ namespace SmartExchanger.ViewModels
         [RelayCommand]
         private void DeleteNode(BaseNodeViewModel node)
         {
+            //if (node is null) return;
+            //if (node.GetType() == typeof(TextureSizeNodeViewModel)) return;
+            //var toRemove = Connections.Where(c => c.Source.Node == node || c.Target.Node == node).ToList();
+            //foreach(var conn in toRemove)
+            //{
+            //    Connections.Remove(conn);
+            //    SelectedConnections.Remove(conn);
+            //}
+
+            //node.CurrentTexture?.Dispose();
+            //node.CurrentTexture = null;
+            //node.ClearNode();
+            //if (node is OutputNodeViewModel outputNode)
+            //{
+            //    outputNode.InputTexture = null;
+            //    outputNode.RequestRender = null;
+            //}
+
+            //node.PropsChanged -= RecalculateGraph;
+            //Nodes.Remove(node);
+
+            //NeedsVramCleanup = true;
+
+            //RecalculateGraph();
+            //ForceReleaseVRAM();
             if (node is null) return;
             if (node.GetType() == typeof(TextureSizeNodeViewModel)) return;
+
             var toRemove = Connections.Where(c => c.Source.Node == node || c.Target.Node == node).ToList();
-            foreach(var conn in toRemove)
+            foreach (var conn in toRemove)
             {
+                conn.Target.Node.ClearNode();
+
                 Connections.Remove(conn);
                 SelectedConnections.Remove(conn);
             }
 
             node.CurrentTexture?.Dispose();
             node.CurrentTexture = null;
-            node.ClearNode();
-            if (node is OutputNodeViewModel outputNode)
-            {
-                outputNode.InputTexture = null;
-                outputNode.RequestRender = null;
-            }
 
             node.PropsChanged -= RecalculateGraph;
+            if (node is OutputNodeViewModel outputNode)
+            {
+                outputNode.RequestRender = null;
+                ClearGraphicsContext();
+            }
+
+            node.ClearNode();
             Nodes.Remove(node);
 
-            NeedsVramCleanup = true;
-
             RecalculateGraph();
-            //ForceReleaseVRAM();
+            ForceReleaseVRAM();
         }
 
         private List<BaseNodeViewModel> GetTopologicallySortedNodes()
@@ -372,14 +399,15 @@ namespace SmartExchanger.ViewModels
             }
         }
 
-        //public void ForceReleaseVRAM()
-        //{
-        //    if (_grContext is not null)
-        //    {
-        //        _grContext.Flush();
-        //        _grContext.PurgeResources();
-        //    }
-        //}
+        public void ForceReleaseVRAM()
+        {
+            if (_grContext is not null)
+            {
+                _grContext.Flush();
+                _grContext.PurgeUnlockedResources(true);
+                _grContext.PurgeResources();
+            }
+        }
         public void ClearGraphicsContext()
         {
             foreach (var node in Nodes)
