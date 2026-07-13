@@ -826,5 +826,46 @@ namespace SmartExchanger.ViewModels
 
             public int GetHashCode(T obj) => RuntimeHelpers.GetHashCode(obj);
         }
+
+        [RelayCommand]
+        private void ClearWorkspace()
+        {
+            var result = System.Windows.MessageBox.Show("Are you sure you want to clear the workspace? This process cannot be undone!",
+                "Clear workspace", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            if (_isDisposed)
+            {
+                return;
+            }
+            _pendingSourceConnector = null;
+            foreach (var node in Nodes.OfType<OutputNodeViewModel>())
+            {
+                node.ClearPreview();
+            }
+            foreach(var node in Nodes.ToList())
+            {
+                DetachNode(node);
+            }
+            Connections.Clear();
+            SelectedConnections.Clear();
+            Nodes.Clear();
+            AddNodeInternal(CreateDefaultTextureSizeNode());
+            InvalidateGraph(true);
+        }
+
+        private TextureSizeNodeViewModel CreateDefaultTextureSizeNode()
+        {
+            var node = new TextureSizeNodeViewModel { Location = new Point(0, 0) };
+            if (node.AvailableSizes.Count > 0)
+            {
+                node.SelectedSize = node.AvailableSizes[0];
+            }
+            return node;
+        }
+
     }
 }

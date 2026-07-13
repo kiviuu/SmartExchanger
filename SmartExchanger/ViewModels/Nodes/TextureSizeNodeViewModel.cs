@@ -22,5 +22,6 @@ namespace SmartExchanger.ViewModels.Nodes
         {
             return null;
         }
+        
     }
 }

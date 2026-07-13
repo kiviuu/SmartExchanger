@@ -23,11 +23,6 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Grid>
-        <!--
-            Jedyny trwały host OpenGL w aplikacji. Ma 1x1 px i nie służy do
-            wyświetlania podglądu; zapewnia aktywny GRContext dla całego grafu.
-            OutputNode'y pokazują zwykłe WriteableBitmap WPF.
-        -->
         <skia:SKGLElement helpers:SkiaExtensions.Editor="{Binding Editor}"
                           Width="1"
                           Height="1"
@@ -91,7 +86,9 @@
                                       CommandParameter="{x:Static nodes:NodeType.OutputNode}"/>
                         </MenuItem>
                     </MenuItem>
-
+                    <Separator />
+                    <MenuItem Header="Clear workspace"
+                              Command="{Binding ClearWorkspaceCommand}" />
                 </ContextMenu>
             </nodify:NodifyEditor.ContextMenu>
         </nodify:NodifyEditor>
