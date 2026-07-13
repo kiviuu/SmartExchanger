@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SkiaSharp;
 
 namespace SmartExchanger.ViewModels.Nodes
@@ -9,76 +9,62 @@ namespace SmartExchanger.ViewModels.Nodes
         private float _factor = 0.5f;
 
         [ObservableProperty]
-        private SKImage? _inputTextureA;
-
-        [ObservableProperty]
-        private SKImage? _inputTextureB;
-
-        public event Action? PropsChanged;
-
-        [ObservableProperty]
         private SKBlendMode _selectedBlendMode = SKBlendMode.SrcOver;
 
-        public IReadOnlyList<SKBlendMode> AvailableBlendModes { get; } = Enum.GetValues<SKBlendMode>();
+        public ConnectorViewModel InputAConnector { get; }
+        public ConnectorViewModel InputBConnector { get; }
+        public ConnectorViewModel OutputConnector { get; }
+
+        public IReadOnlyList<SKBlendMode> AvailableBlendModes { get; } =
+            Enum.GetValues<SKBlendMode>();
 
         public BlendNodeViewModel()
         {
             Title = "Blend Node";
-            Inputs.Add(new ConnectorViewModel(this, "A"));
-            Inputs.Add(new ConnectorViewModel(this, "B"));
-            Outputs.Add(new ConnectorViewModel(this, "Out"));
-            //ProcessNode();
-        }
-        public override void ClearNode()
-        {
-            InputTextureA = null;
-            InputTextureB = null;
+
+            InputAConnector = new ConnectorViewModel(this, "A");
+            InputBConnector = new ConnectorViewModel(this, "B");
+            OutputConnector = new ConnectorViewModel(this, "Out");
+
+            Inputs.Add(InputAConnector);
+            Inputs.Add(InputBConnector);
+            Outputs.Add(OutputConnector);
         }
 
-        public override void ProcessNode(GRContext context, int size)
+        public override SKImage? Render(GRContext context, int size, NodeRenderInputs inputs)
         {
-            if (context is null) return;
-            var refTexture = InputTextureA ?? InputTextureB;
-            if (refTexture is null)
+            var inputA = inputs.Get(InputAConnector);
+            var inputB = inputs.Get(InputBConnector);
+
+            if (inputA is null && inputB is null)
             {
-                CurrentTexture?.Dispose();
-                CurrentTexture = null;
-                return;
+                return null;
             }
 
-            var info = new SKImageInfo(size, size);
-            using var surface = SKSurface.Create(context, true, info);
-            if (surface is null) return;
+            using var surface = CreateGpuSurface(context, size);
             var canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
 
+            var destination = new SKRect(0, 0, size, size);
+            var sampling = new SKSamplingOptions();
 
-            if (InputTextureA is not null)
+            if (inputA is not null)
             {
-                canvas.DrawImage(InputTextureA, new SKPoint(0,0), new SKSamplingOptions());
+                canvas.DrawImage(inputA, destination, sampling);
             }
 
-            if (InputTextureB is not null)
+            if (inputB is not null)
             {
-                using var paint = new SKPaint();
-                byte alpha = (byte)(Factor * 255);
-                paint.Color = SKColors.White.WithAlpha(alpha);
-                paint.IsAntialias = true;
-                paint.BlendMode = SelectedBlendMode;
-                canvas.DrawImage(InputTextureB, new SKPoint(0,0), new SKSamplingOptions(), paint);
+                using var paint = new SKPaint
+                {
+                    BlendMode = SelectedBlendMode,
+                    Color = SKColors.White.WithAlpha((byte)Math.Round(Math.Clamp(Factor, 0f, 1f) * 255f))
+                };
+
+                canvas.DrawImage(inputB, destination, sampling, paint);
             }
-            CurrentTexture?.Dispose();
-            CurrentTexture = surface.Snapshot();
-            OnPropertyChanged(nameof(CurrentTexture));
-        }
 
-        partial void OnFactorChanged(float value) => NotifyInputChanged();
-        partial void OnSelectedBlendModeChanged(SKBlendMode value) => NotifyInputChanged();
-        private void NotifyInputChanged()
-        {
-            PropsChanged?.Invoke();
-            //ProcessNode();
+            return surface.Snapshot();
         }
-
     }
 }

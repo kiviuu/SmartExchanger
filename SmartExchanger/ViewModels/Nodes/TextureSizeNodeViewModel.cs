@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SkiaSharp;
 
 namespace SmartExchanger.ViewModels.Nodes
@@ -7,25 +7,20 @@ namespace SmartExchanger.ViewModels.Nodes
     {
         [ObservableProperty]
         private int _selectedSize = 512;
-        public IReadOnlyList<int> AvailableSizes { get; } = new List<int>() { 128, 256, 512, 1024, 2048, 4096 };
-        public event Action? PropsChanged;
+
+        public IReadOnlyList<int> AvailableSizes { get; } =
+            new[] { 128, 256, 512, 1024, 2048, 4096 };
+
+        public override bool ProducesTexture => false;
+
         public TextureSizeNodeViewModel()
         {
             Title = "Texture Size";
         }
-        public override void ClearNode()
-        {
-            return;
-        }
 
-        public override void ProcessNode(GRContext context, int size)
+        public override SKImage? Render(GRContext context, int size, NodeRenderInputs inputs)
         {
-            return;
-        }
-
-        partial void OnSelectedSizeChanged(int value)
-        {
-            PropsChanged?.Invoke();
+            return null;
         }
     }
 }

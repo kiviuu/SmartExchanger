@@ -1,8 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SmartExchanger.ViewModels.Nodes
 {
@@ -10,61 +7,54 @@ namespace SmartExchanger.ViewModels.Nodes
     {
         [ObservableProperty]
         private float _seed;
+
         [ObservableProperty]
         private float _frequencyX = 0.1f;
+
         [ObservableProperty]
         private float _frequencyY = 0.1f;
+
         [ObservableProperty]
         private int _octaves = 3;
 
-        public SKImage? InputTexture { get; set; }
-
-        public event Action? PropsChanged;
+        public ConnectorViewModel InputConnector { get; }
+        public ConnectorViewModel OutputConnector { get; }
 
         public PerlinNoiseTurbulenceNodeViewModel()
         {
             Title = "Perlin Noise Turbulence Node";
-            Outputs.Add(new ConnectorViewModel(this, "Out"));
-            Inputs.Add(new ConnectorViewModel(this, "In"));
+
+            InputConnector = new ConnectorViewModel(this, "In");
+            OutputConnector = new ConnectorViewModel(this, "Out");
+
+            Inputs.Add(InputConnector);
+            Outputs.Add(OutputConnector);
         }
-        public override void ProcessNode(GRContext context, int size)
+
+        public override SKImage Render(GRContext context, int size, NodeRenderInputs inputs)
         {
-            if (context is null) return;
-            var info = new SKImageInfo(size, size);
-            using var surface = SKSurface.Create(context, true, info);
-            if (surface is null) return;
+            using var surface = CreateGpuSurface(context, size);
             var canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
-            if (InputTexture is not null)
+
+            var destination = new SKRect(0, 0, size, size);
+            var input = inputs.Get(InputConnector);
+
+            if (input is not null)
             {
-                canvas.DrawImage(InputTexture, new SKPoint(0, 0), new SKSamplingOptions());
+                canvas.DrawImage(input, destination, new SKSamplingOptions());
             }
 
+            using var shader = SKShader.CreatePerlinNoiseTurbulence(FrequencyX, FrequencyY, Math.Max(0, Octaves), Seed);
 
-            using var paint = new SKPaint();
-            using var shader = SKShader.CreatePerlinNoiseTurbulence(FrequencyX, FrequencyY, Octaves, Seed);
-            paint.Shader = shader;
-            paint.BlendMode = SKBlendMode.Multiply;
-            canvas.DrawRect(0, 0, size, size, paint);
-            CurrentTexture?.Dispose();
-            CurrentTexture = surface.Snapshot();
-            OnPropertyChanged(nameof(CurrentTexture));
-        }
+            using var paint = new SKPaint
+            {
+                Shader = shader,
+                BlendMode = SKBlendMode.Multiply
+            };
 
-        partial void OnFrequencyXChanged(float value) => NotifyInputChanged();
-        partial void OnSeedChanged(float value) => NotifyInputChanged();
-        partial void OnOctavesChanged(int value) => NotifyInputChanged();
-        partial void OnFrequencyYChanged(float value) => NotifyInputChanged();
-
-        private void NotifyInputChanged()
-        {
-            PropsChanged?.Invoke();
-            //ProcessNode();
-        }
-
-        public override void ClearNode()
-        {
-            InputTexture = null;
+            canvas.DrawRect(destination, paint);
+            return surface.Snapshot();
         }
     }
 }

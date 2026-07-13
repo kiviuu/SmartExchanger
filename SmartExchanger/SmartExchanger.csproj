@@ -1,8 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -22,9 +22,16 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.9" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     <PackageReference Include="Nodify" Version="7.3.0" />
-    <PackageReference Include="SkiaSharp" Version="4.148.0" />
-    <PackageReference Include="SkiaSharp.Views" Version="4.148.0" />
-    <PackageReference Include="SkiaSharp.Views.WPF" Version="4.148.0" />
+    <PackageReference Include="SkiaSharp" Version="4.150.0" />
+    <PackageReference Include="SkiaSharp.Views" Version="4.150.0" />
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="4.150.0" />
+    <!--
+      SkiaSharp.Views.WPF 4.148.0 rozwiązywał się do starego GLWpfControl 3.3.0,
+      dla którego potwierdzono leak przy tworzeniu/usuwaniu SKGLElement.
+      Jawne wersje poniżej wymuszają stos zawierający poprawiony lifecycle Dispose.
+    -->
+    <PackageReference Include="OpenTK" Version="4.9.4" />
+    <PackageReference Include="OpenTK.GLWpfControl" Version="4.3.3" />
   </ItemGroup>
 
   <ItemGroup>

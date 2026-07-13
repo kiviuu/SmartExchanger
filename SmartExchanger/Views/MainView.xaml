@@ -1,4 +1,4 @@
-﻿<Window x:Class="SmartExchanger.Views.MainView"
+<Window x:Class="SmartExchanger.Views.MainView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:nodify="https://miroiu.github.io/nodify"
@@ -6,6 +6,7 @@
         xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
+        xmlns:helpers="clr-namespace:SmartExchanger.Helpers"
         Title="Smart Exchanger" Height="650" Width="950"
         ResizeMode="CanResize"
         Background="#1E1E1E">
@@ -22,6 +23,20 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Grid>
+        <!--
+            Jedyny trwały host OpenGL w aplikacji. Ma 1x1 px i nie służy do
+            wyświetlania podglądu; zapewnia aktywny GRContext dla całego grafu.
+            OutputNode'y pokazują zwykłe WriteableBitmap WPF.
+        -->
+        <skia:SKGLElement helpers:SkiaExtensions.Editor="{Binding Editor}"
+                          Width="1"
+                          Height="1"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Top"
+                          IsHitTestVisible="False"
+                          Opacity="0.001"
+                          Panel.ZIndex="1000" />
+
         <nodify:NodifyEditor DataContext="{Binding Editor}"
                      ItemsSource="{Binding Nodes}" 
                      Connections="{Binding Connections}"

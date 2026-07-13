@@ -2,9 +2,14 @@
 
 namespace SmartExchanger.ViewModels
 {
-    public partial class MainViewModel : ObservableObject
+    public partial class MainViewModel : ObservableObject, IDisposable
     {
-        [ObservableProperty]
-        private EditorViewModel _editor = new();
+        public EditorViewModel Editor { get; } = new();
+
+        public void Dispose()
+        {
+            Editor.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

@@ -1,58 +1,57 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SkiaSharp;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace SmartExchanger.ViewModels.Nodes
 {
-    // starting node
     public partial class ColorNodeViewModel : BaseNodeViewModel
     {
         [ObservableProperty]
         private byte _r = 128;
 
         [ObservableProperty]
-        private byte _g = 0;
+        private byte _g;
 
         [ObservableProperty]
         private byte _b = 128;
 
-        public SolidColorBrush ColorBrush => new SolidColorBrush(Color.FromRgb(R, G, B));
+        public ConnectorViewModel OutputConnector { get; }
 
-        public event Action? PropsChanged;
+        public SolidColorBrush ColorBrush
+        {
+            get
+            {
+                var brush = new SolidColorBrush(Color.FromRgb(R, G, B));
+                brush.Freeze();
+                return brush;
+            }
+        }
+
         public ColorNodeViewModel()
         {
             Title = "Color Node";
-            Outputs.Add(new ConnectorViewModel(this, "Out"));
-            //ProcessNode();
+            OutputConnector = new ConnectorViewModel(this, "Out");
+            Outputs.Add(OutputConnector);
         }
 
-        partial void OnRChanged(byte value) => NotifyColorUpdate();
-        partial void OnGChanged(byte value) => NotifyColorUpdate();
-        partial void OnBChanged(byte value) => NotifyColorUpdate();
-
-        private void NotifyColorUpdate()
+        public override SKImage Render(
+            GRContext context,
+            int size,
+            NodeRenderInputs inputs)
         {
-            OnPropertyChanged(nameof(ColorBrush));
-            PropsChanged?.Invoke();
-            //ProcessNode();
+            using var surface = CreateGpuSurface(context, size);
+            surface.Canvas.Clear(new SKColor(R, G, B, 255));
+            return surface.Snapshot();
         }
 
-        public override void ProcessNode(GRContext context, int size)
-        {
-            if (context is null) return;
-            var info = new SKImageInfo(size, size);
-            using var surface = SKSurface.Create(context, true, info);
-            if (surface is null) return;
-            surface.Canvas.Clear(new SKColor(R, G, B));
-            CurrentTexture?.Dispose();
-            CurrentTexture = surface.Snapshot();
-            OnPropertyChanged(nameof(CurrentTexture));
-        }
+        partial void OnRChanged(byte value) => OnPropertyChanged(nameof(ColorBrush));
+        partial void OnGChanged(byte value) => OnPropertyChanged(nameof(ColorBrush));
+        partial void OnBChanged(byte value) => OnPropertyChanged(nameof(ColorBrush));
 
-        public override void ClearNode()
+        protected override bool IsRenderAffectingProperty(string? propertyName)
         {
-            return;
+            return propertyName != nameof(ColorBrush) &&
+                   base.IsRenderAffectingProperty(propertyName);
         }
     }
 }

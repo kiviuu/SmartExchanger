@@ -1,47 +1,70 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SkiaSharp;
-using SkiaSharp.Views.WPF;
-using System.Drawing;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace SmartExchanger.ViewModels.Nodes
 {
-    // contain final render resul - ending Node
+    /// <summary>
+    /// Last output node with preview
+    /// - it does not contain SKGElement nor GrContext, SkImage
+    /// - preview is small CPU WPF buffor (WritableBitmap)
+    /// </summary>
     public partial class OutputNodeViewModel : BaseNodeViewModel
     {
-        //[ObservableProperty]
-        //private SolidColorBrush _inputBrush = new SolidColorBrush(Colors.Transparent);
+        [ObservableProperty]
+        private bool _hasSignal;
 
+        [ObservableProperty]
+        private WriteableBitmap? _previewImage;
 
-        public SKImage? InputTexture { get; set; }
-        public Action? RequestRender { get; set; }
+        public ConnectorViewModel InputConnector { get; }
+
+        public override bool ProducesTexture => false;
+
         public OutputNodeViewModel()
         {
             Title = "Output Node";
-            Inputs.Add(new ConnectorViewModel(this, "In"));
-            //ProcessNode();
+            InputConnector = new ConnectorViewModel(this, "In");
+            Inputs.Add(InputConnector);
         }
 
-        public override void ProcessNode(GRContext context, int size)
+        public override SKImage? Render(GRContext context, int size, NodeRenderInputs inputs)
         {
-            if (context is null) return;
-            if (InputTexture is null)
+            return null;
+        }
+
+        public void UpdatePreview(SKBitmap bitmap)
+        {
+            ArgumentNullException.ThrowIfNull(bitmap);
+
+            int width = bitmap.Width;
+            int height = bitmap.Height;
+
+            if (PreviewImage is null ||
+                PreviewImage.PixelWidth != width ||
+                PreviewImage.PixelHeight != height)
             {
-                CurrentTexture = null;
-                OnPropertyChanged(nameof(CurrentTexture));
-                return;
+                PreviewImage = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
             }
-            CurrentTexture = InputTexture;
-            //ResultTexture = CurrentTexture.ToWriteableBitmap();
-            OnPropertyChanged(nameof(CurrentTexture));
+
+            int bufferSize = checked(bitmap.RowBytes * bitmap.Height);
+            PreviewImage.WritePixels(new Int32Rect(0, 0, width, height), bitmap.GetPixels(), bufferSize, bitmap.RowBytes);
+
+            HasSignal = true;
         }
 
-        public override void ClearNode()
+        public void ClearPreview()
         {
-            //ResultTexture = null;
-            CurrentTexture = null;
-            InputTexture = null;
+            HasSignal = false;
+            PreviewImage = null;
+        }
+
+        protected override bool IsRenderAffectingProperty(string? propertyName)
+        {
+            return propertyName != nameof(HasSignal) &&
+                   propertyName != nameof(PreviewImage) &&
+                   base.IsRenderAffectingProperty(propertyName);
         }
     }
 }

@@ -1,7 +1,5 @@
-﻿using System.Windows;
-using SkiaSharp.Views.Desktop;
-using SkiaSharp.Views.WPF;
-using SmartExchanger.ViewModels;
+﻿using SmartExchanger.ViewModels;
+using System.Windows;
 
 namespace SmartExchanger.Views
 {
@@ -11,6 +9,19 @@ namespace SmartExchanger.Views
         {
             InitializeComponent();
             DataContext = new MainViewModel();
+            Closed += OnClosed;
+        }
+
+        private void OnClosed(object? sender, EventArgs e)
+        {
+            Closed -= OnClosed;
+
+            if (DataContext is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+
+            DataContext = null;
         }
     }
 }

@@ -1,94 +1,146 @@
 ﻿using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using SkiaSharp.Views.WPF;
-using System.Windows;
-using SmartExchanger.ViewModels;
-using SmartExchanger.ViewModels.Nodes;
-using System;
 
 namespace SmartExchanger.Helpers
 {
+    /// <summary>
+    /// One persistent SKGElement - responsible for entire GPU rendering
+    /// NOTE: Output Nodes do not create their own OpenGL elements
+    /// </summary>
     public static class SkiaExtensions
     {
-        public static readonly DependencyProperty EditorProperty = DependencyProperty.RegisterAttached(
-            "Editor", typeof(EditorViewModel), typeof(SkiaExtensions), new PropertyMetadata(null));
+        public static readonly DependencyProperty EditorProperty =
+            DependencyProperty.RegisterAttached(
+                "Editor",
+                typeof(EditorViewModel),
+                typeof(SkiaExtensions),
+                new PropertyMetadata(null, OnEditorChanged));
 
-        public static readonly DependencyProperty OutputNodeProperty = DependencyProperty.RegisterAttached(
-            "OutputNode", typeof(OutputNodeViewModel), typeof(SkiaExtensions), new PropertyMetadata(null, OnNodeChanged));
+        private static readonly DependencyProperty IsHookedProperty =
+            DependencyProperty.RegisterAttached(
+                "IsHooked",
+                typeof(bool),
+                typeof(SkiaExtensions),
+                new PropertyMetadata(false));
 
-        public static void SetEditor(UIElement element, EditorViewModel value) => element.SetValue(EditorProperty, value);
-        public static EditorViewModel GetEditor(UIElement element) => (EditorViewModel)element.GetValue(EditorProperty);
+        private static readonly DependencyProperty LastContextProperty =
+            DependencyProperty.RegisterAttached(
+                "LastContext",
+                typeof(GRContext),
+                typeof(SkiaExtensions),
+                new PropertyMetadata(null));
 
-        public static void SetOutputNode(UIElement element, OutputNodeViewModel value) => element.SetValue(OutputNodeProperty, value);
-        public static OutputNodeViewModel GetOutputNode(UIElement element) => (OutputNodeViewModel)element.GetValue(OutputNodeProperty);
+        public static void SetEditor(UIElement element, EditorViewModel? value) =>
+            element.SetValue(EditorProperty, value);
 
-        private static void OnNodeChanged(DependencyObject d, DependencyPropertyChangedEventArgs args)
+        public static EditorViewModel? GetEditor(UIElement element) =>
+            element.GetValue(EditorProperty) as EditorViewModel;
+
+        private static void OnEditorChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
         {
-            if (d is SKGLElement glElement)
+            if (dependencyObject is not SKGLElement glElement)
             {
-                // old node disconnecions
-                if (args.OldValue is OutputNodeViewModel oldNode)
-                {
-                    glElement.PaintSurface -= GlControl_PaintSurface;
-                    glElement.Unloaded -= GlElement_Unloaded;
-                    oldNode.RequestRender = null;
-                }
+                return;
+            }
 
-                // new node connection
-                if (args.NewValue is OutputNodeViewModel newNode)
-                {
-                    glElement.PaintSurface += GlControl_PaintSurface;
-                    glElement.Unloaded += GlElement_Unloaded;
-                    newNode.RequestRender = glElement.InvalidateVisual;
-                    glElement.InvalidateVisual();
-                }
+            EnsureEventHandlers(glElement);
+
+            if (args.OldValue is EditorViewModel oldEditor)
+            {
+                oldEditor.SetGpuRenderRequest(null);
+            }
+
+            if (args.NewValue is EditorViewModel newEditor)
+            {
+                AssignWeakRenderCallback(glElement, newEditor);
+                glElement.InvalidateVisual();
             }
         }
 
-        private static void GlControl_PaintSurface(object sender, SKPaintGLSurfaceEventArgs args)
+        private static void EnsureEventHandlers(SKGLElement glElement)
         {
-            if (sender is SKGLElement glElement)
+            if ((bool)glElement.GetValue(IsHookedProperty))
             {
-                var canvas = args.Surface.Canvas;
-                canvas.Clear(SKColors.Transparent);
-
-                var editor = GetEditor(glElement);
-                var outputNode = GetOutputNode(glElement);
-
-                if (editor != null && outputNode != null)
-                {
-                    if (!editor.IsGraphicsContextSet)
-                    {
-                        editor.SetGraphicsContext(glElement.GRContext);
-                        editor.IsGraphicsContextSet = true;
-                    }
-
-                    editor.RenderGraphToCanvas(outputNode, glElement.GRContext, canvas);
-                }
+                return;
             }
+
+            glElement.SetValue(IsHookedProperty, true);
+            glElement.PaintSurface += GlElement_PaintSurface;
+            glElement.Loaded += GlElement_Loaded;
+            glElement.Unloaded += GlElement_Unloaded;
+        }
+
+        private static void AssignWeakRenderCallback(SKGLElement glElement,EditorViewModel editor)
+        {
+            var weakElement = new WeakReference<SKGLElement>(glElement);
+
+            editor.SetGpuRenderRequest(() =>
+            {
+                if (weakElement.TryGetTarget(out var element) && element.IsLoaded)
+                {
+                    element.InvalidateVisual();
+                }
+            });
+        }
+
+        private static void GlElement_Loaded(object sender, RoutedEventArgs args)
+        {
+            if (sender is not SKGLElement glElement)
+            {
+                return;
+            }
+
+            var editor = GetEditor(glElement);
+            if (editor is not null)
+            {
+                AssignWeakRenderCallback(glElement, editor);
+            }
+
+            glElement.InvalidateVisual();
+        }
+
+        private static void GlElement_PaintSurface(object? sender, SKPaintGLSurfaceEventArgs args)
+        {
+            if (sender is not SKGLElement glElement)
+            {
+                return;
+            }
+
+            var editor = GetEditor(glElement);
+            var context = glElement.GRContext;
+
+            args.Surface.Canvas.Clear(SKColors.Transparent);
+
+            if (editor is null || context is null)
+            {
+                return;
+            }
+
+            glElement.SetValue(LastContextProperty, context);
+            editor.SetGraphicsContext(context);
+            editor.RenderPendingOutputs(context, args.Surface.Canvas);
         }
 
         private static void GlElement_Unloaded(object sender, RoutedEventArgs args)
         {
-            if (sender is SKGLElement glElement)
+            if (sender is not SKGLElement glElement)
             {
-                glElement.PaintSurface -= GlControl_PaintSurface;
-                glElement.Unloaded -= GlElement_Unloaded;
-
-                var node = GetOutputNode(glElement);
-                if (node is not null)
-                {
-                    node.RequestRender = null;
-                }
-
-                var editor = GetEditor(glElement);
-                if (editor != null)
-                {
-                    editor.ClearGraphicsContext();
-                }
-
-                glElement.Dispose();
+                return;
             }
+
+            var editor = GetEditor(glElement);
+            editor?.SetGpuRenderRequest(null);
+
+            var context = glElement.GetValue(LastContextProperty) as GRContext;
+            glElement.ClearValue(LastContextProperty);
+
+            if (editor is not null && context is not null)
+            {
+                editor.ClearGraphicsContext(context);
+            }
+
+            // This object will be destoryed with app closing event
         }
     }
 }

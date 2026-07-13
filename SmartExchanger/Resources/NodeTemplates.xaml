@@ -1,9 +1,8 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:nodify="https://miroiu.github.io/nodify"
                     xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes"
-                    xmlns:helpers="clr-namespace:SmartExchanger.Helpers"
-                    xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF">
+                    xmlns:helpers="clr-namespace:SmartExchanger.Helpers">
 
     <DataTemplate DataType="{x:Type nodes:ColorNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
@@ -223,9 +222,11 @@
 
             <Border Width="140" Height="140" Margin="8" Background="#00000000" CornerRadius="6" BorderBrush="#3F3F46" BorderThickness="2" ClipToBounds="True">
                 <Grid Width="256" Height="256" Background="Black">
-                    <skia:SKGLElement helpers:SkiaExtensions.Editor="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}"
-                                        helpers:SkiaExtensions.OutputNode="{Binding}"
-                                        Width="256" Height="256" />
+                    <Image Source="{Binding PreviewImage}"
+                           Width="256"
+                           Height="256"
+                           Stretch="UniformToFill"
+                           SnapsToDevicePixels="True" />
 
                     <TextBlock Text="NO SIGNAL" 
                                 Foreground="Transparent" 
@@ -235,7 +236,7 @@
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CurrentTexture}" Value="{x:Null}">
+                                    <DataTrigger Binding="{Binding HasSignal}" Value="False">
                                         <Setter Property="Visibility" Value="Visible" />
                                     </DataTrigger>
                                 </Style.Triggers>
