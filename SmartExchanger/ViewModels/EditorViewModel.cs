@@ -1,11 +1,16 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using SkiaSharp;
 using SmartExchanger.ViewModels.Nodes;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace SmartExchanger.ViewModels
 {
@@ -33,6 +38,8 @@ namespace SmartExchanger.ViewModels
             new(ReferenceComparer<BaseNodeViewModel>.Instance);
 
         private ConnectorViewModel? _pendingSourceConnector;
+
+        private readonly Queue<PendingExportRequest> _pendingExports = new();
 
         // One persistnet SKGElement is the owner of this GRContext
         private GRContext? _graphicsContext;
@@ -278,7 +285,9 @@ namespace SmartExchanger.ViewModels
             ConfigureGpuResourceCache(context, GetTextureSize());
 
             bool graphChanged = _renderedGraphRevision != _graphRevision;
-            if (!graphChanged && !_purgeOnNextRender)
+            bool hasPendingExports = _pendingExports.Count > 0;
+
+            if (!graphChanged && !_purgeOnNextRender && !hasPendingExports)
             {
                 return;
             }
@@ -305,6 +314,7 @@ namespace SmartExchanger.ViewModels
 
                     _renderedGraphRevision = _graphRevision;
                 }
+                ProcessPendingExports(context);
 
                 FlushAndPurge(context);
                 _purgeOnNextRender = false;
@@ -803,6 +813,7 @@ namespace SmartExchanger.ViewModels
             Connections.Clear();
             SelectedConnections.Clear();
             Nodes.Clear();
+            _pendingExports.Clear();
 
             GC.SuppressFinalize(this);
         }
@@ -867,5 +878,197 @@ namespace SmartExchanger.ViewModels
             return node;
         }
 
+        // Export texture
+        private enum TextureExportFormat
+        {
+            Png,
+            Jpeg,
+            Tiff
+        }
+        private sealed record PendingExportRequest(OutputNodeViewModel OutputNode, string FilePath, int TextureSize, TextureExportFormat Format);
+
+        [RelayCommand]
+        private void SaveRender(OutputNodeViewModel node)
+        {
+            if (_isDisposed || node is null || !Nodes.Contains(node))
+            {
+                return;
+            }
+            var sizeNode = Nodes.OfType<TextureSizeNodeViewModel>().FirstOrDefault();
+            if (sizeNode is null)
+            {
+                MessageBox.Show("Texture Size Node does not exist.", "Texture export", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            bool hasInputConnection = Connections.Any(c => c.Target.Node == node && c.Target == node.InputConnector);
+            if (!hasInputConnection)
+            {
+                MessageBox.Show("Output Node does not have any input.", "Texture export", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (_requestGpuRender is null)
+            {
+                MessageBox.Show("GPU renderer has not been created yet.", "Texture export", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            var textureSize = sizeNode.SelectedSize;
+            var fileDialog = new SaveFileDialog
+            {
+                Title = "Save texture",
+                FileName = $"texture_{textureSize}x{textureSize}",
+                DefaultExt = "png",
+                AddExtension = true,
+                OverwritePrompt = true,
+                CheckPathExists = true,
+                Filter = "PNG image (*.png)|*.png|" +
+                        "JPEG image (*.jpg;*.jpeg)|*.jpg;*.jpeg|" +
+                        "TIFF image (*.tif;*.tiff)|*.tif;*.tiff",
+                FilterIndex = 1
+            };
+            bool? dialogResult = Application.Current?.MainWindow is Window owner ? fileDialog.ShowDialog(owner) : fileDialog.ShowDialog();
+            if (dialogResult != true)
+            {
+                return;
+            }
+            TextureExportFormat format = fileDialog.FilterIndex switch
+            {
+                2 => TextureExportFormat.Jpeg,
+                3 => TextureExportFormat.Tiff,
+                _ => TextureExportFormat.Png
+            };
+            string filePath = NormalizeExportExtension(fileDialog.FileName, format);
+            _pendingExports.Enqueue(new PendingExportRequest(node, filePath, textureSize, format));
+            RequestGpuRender();
+        }
+
+        private void ProcessPendingExports(GRContext context)
+        {
+            while (_pendingExports.TryDequeue(out var exportRequest))
+            {
+                try
+                {
+                    ExportOutput(context, exportRequest);
+                }
+                catch(Exception ex)
+                {
+                    Debug.WriteLine($"[Texture export] Export failed: {ex}");
+                    Application.Current?.Dispatcher.BeginInvoke(
+                            () =>
+                            {
+                                MessageBox.Show($"Something went wrong during texture export process.", "Texture export failure.",MessageBoxButton.OK, MessageBoxImage.Error );
+                            }
+                        );
+                }
+            }
+        }
+        private void ExportOutput(GRContext context, PendingExportRequest request)
+        {
+            if (_isDisposed || !Nodes.Contains(request.OutputNode) || context.IsAbandoned)
+            {
+                return;
+            }
+            using var outputImage = BuildOutputImage(request.OutputNode, context, request.TextureSize);
+            if (outputImage is null)
+            {
+                throw new InvalidOperationException("Output Node did not generate any texture.");
+            }
+            using var cpuBitmap = CreateExportBitmap(context, outputImage, request.Format != TextureExportFormat.Jpeg);
+            SaveBitmap(cpuBitmap, request.FilePath,  request.Format);
+        }
+        private static SKBitmap CreateExportBitmap(GRContext context, SKImage src, bool preserveTransparency)
+        {
+            var imageInfo = new SKImageInfo(src.Width, src.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+            using var exportSurface = SKSurface.Create(
+                    context, true, imageInfo
+                );
+            var canvas = exportSurface.Canvas;
+            canvas.Clear(preserveTransparency ? SKColors.Transparent : SKColors.White);
+            canvas.DrawImage(src, new SKPoint(0, 0), new SKSamplingOptions());
+            context.Flush(submit: true, synchronous: true);
+            var bitmap = new SKBitmap(imageInfo);
+            bool readSucceed = exportSurface.ReadPixels(imageInfo, bitmap.GetPixels(), bitmap.RowBytes, 0, 0);
+            if (!readSucceed)
+            {
+                bitmap.Dispose();
+                throw new InvalidOperationException("Failed to copy image from GPU to RAM.");
+            }
+            return bitmap;
+        }
+        private static void SaveBitmap(SKBitmap bitmap, string filePath, TextureExportFormat format)
+        {
+            int buffSize = checked(bitmap.RowBytes * bitmap.Height);
+            BitmapSource bitmapSrc = BitmapSource.Create(
+                    bitmap.Width, bitmap.Height, 96.0, 96.0, PixelFormats.Pbgra32, null, bitmap.GetPixels(), buffSize, bitmap.RowBytes
+                );
+            bitmapSrc.Freeze();
+            BitmapEncoder encoder;
+            BitmapSource frameSource = bitmapSrc;
+            switch (format)
+            {
+                case TextureExportFormat.Png:
+                    encoder = new PngBitmapEncoder();
+                    break;
+                case TextureExportFormat.Jpeg:
+                    {
+                        var convertedBitmap = new FormatConvertedBitmap();
+                        convertedBitmap.BeginInit();
+                        convertedBitmap.Source = bitmapSrc;
+                        convertedBitmap.DestinationFormat = PixelFormats.Bgr24;
+                        convertedBitmap.EndInit();
+                        convertedBitmap.Freeze();
+
+                        frameSource = convertedBitmap;
+
+                        encoder = new JpegBitmapEncoder
+                        {
+                            QualityLevel = 95
+                        };
+
+                        break;
+                    }
+                case TextureExportFormat.Tiff:
+                    encoder = new TiffBitmapEncoder
+                    {
+                        Compression = TiffCompressOption.Zip
+                    };
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(format), format, "Wrong format.");
+            }
+            encoder.Frames.Add(BitmapFrame.Create(frameSource));
+            using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            encoder.Save(fileStream);
+        }
+        private static string NormalizeExportExtension(string filePath, TextureExportFormat format)
+        {
+            string ext = Path.GetExtension(filePath).ToLowerInvariant();
+            bool extensionMatchesFormat = format switch
+            {
+                TextureExportFormat.Png =>
+                    ext == ".png",
+
+                TextureExportFormat.Jpeg =>
+                    ext is ".jpg" or ".jpeg",
+
+                TextureExportFormat.Tiff =>
+                    ext is ".tif" or ".tiff",
+
+                _ => false
+            };
+            if (extensionMatchesFormat)
+            {
+                return filePath;
+            }
+            string defaultExtension = format switch
+            {
+                TextureExportFormat.Png => ".png",
+                TextureExportFormat.Jpeg => ".jpg",
+                TextureExportFormat.Tiff => ".tiff",
+                _ => throw new ArgumentOutOfRangeException(nameof(format))
+            };
+
+            return Path.ChangeExtension(
+                filePath,
+                defaultExtension);
+        }
     }
 }

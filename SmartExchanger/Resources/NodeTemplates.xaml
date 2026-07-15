@@ -209,6 +209,9 @@
                     <MenuItem Header="Delete" 
                               Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
                               CommandParameter="{Binding}"/>
+                    <MenuItem Header="Export"
+                              Command="{Binding PlacementTarget.Tag.SaveRenderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding}" />
                 </ContextMenu>
             </nodify:Node.ContextMenu>
 
