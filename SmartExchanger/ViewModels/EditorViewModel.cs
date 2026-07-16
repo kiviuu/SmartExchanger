@@ -15,7 +15,7 @@ using System.Windows.Media.Imaging;
 namespace SmartExchanger.ViewModels
 {
     /// <summary>
-    /// Manags graph of nodes and a persistent shared renderer
+    /// Manages graph of nodes and a persistent shared renderer
     /// - in entire editor exists only one persistent SKGElement and its GRContext
     /// - OutpuNode does not have own SKGElement or GRContext
     /// - SKImages are created only for one rendering process and after preview rendering GPU result is copied to WritableBitmap
@@ -909,6 +909,7 @@ namespace SmartExchanger.ViewModels
             if (_requestGpuRender is null)
             {
                 MessageBox.Show("GPU renderer has not been created yet.", "Texture export", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
             var textureSize = sizeNode.SelectedSize;
             var fileDialog = new SaveFileDialog
