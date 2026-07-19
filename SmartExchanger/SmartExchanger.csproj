@@ -36,7 +36,11 @@
 
   <ItemGroup>
     <Folder Include="Repositories\" />
-    <Folder Include="Services\" />
+  </ItemGroup>
+  <ItemGroup>
+	  <Content Include="Shaders\**\*.sksl">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
   </ItemGroup>
 
 </Project>

@@ -58,7 +58,6 @@
             </StackPanel>
         </nodify:Node>
     </DataTemplate>
-
     <DataTemplate DataType="{x:Type nodes:PerlinNoiseFractalNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
                      Input="{Binding Inputs}" 
@@ -96,7 +95,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Freq X" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyX, Mode=TwoWay, Delay=150}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyX, Mode=TwoWay, Delay=150}" TickFrequency="0.01" IsSnapToTickEnabled="True"/>
                 </Grid>
 
                 <Grid Margin="0,2">
@@ -105,7 +104,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Freq Y" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyY, Mode=TwoWay, Delay=150}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyY, Mode=TwoWay, Delay=150}" TickFrequency="0.01" IsSnapToTickEnabled="True"/>
                 </Grid>
 
                 <Grid Margin="0,2">
@@ -165,7 +164,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Freq X" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyX, Mode=TwoWay, Delay=150}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyX, Mode=TwoWay, Delay=150}" TickFrequency="0.01" IsSnapToTickEnabled="True"/>
                 </Grid>
 
                 <Grid Margin="0,2">
@@ -174,7 +173,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Freq Y" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyY, Mode=TwoWay, Delay=150}" TickFrequency="0.001" IsSnapToTickEnabled="True"/>
+                    <Slider Margin="10 0 0 0" Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding FrequencyY, Mode=TwoWay, Delay=150}" TickFrequency="0.01" IsSnapToTickEnabled="True"/>
                 </Grid>
 
                 <Grid Margin="0,2">
@@ -197,7 +196,6 @@
             </StackPanel>
         </nodify:Node>
     </DataTemplate>
-
     <DataTemplate DataType="{x:Type nodes:OutputNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
                      Input="{Binding Inputs}" 
@@ -222,6 +220,7 @@
                                       IsConnected="{Binding IsConnected}"/>
                 </DataTemplate>
             </nodify:Node.InputConnectorTemplate>
+
 
             <Border Width="140" Height="140" Margin="8" Background="#00000000" CornerRadius="6" BorderBrush="#3F3F46" BorderThickness="2" ClipToBounds="True">
                 <Grid Width="256" Height="256" Background="Black">
@@ -250,8 +249,6 @@
             </Border>
         </nodify:Node>
     </DataTemplate>
-
-
     <DataTemplate DataType="{x:Type nodes:BlendNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
                      Input="{Binding Inputs}" 
@@ -306,7 +303,6 @@
             </StackPanel>
         </nodify:Node>
     </DataTemplate>
-
     <DataTemplate DataType="{x:Type nodes:TextureSizeNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
@@ -332,6 +328,91 @@
                               SelectedItem="{Binding SelectedSize, Mode=TwoWay}"/>
                 </Grid>
                 <TextBlock Text="px (Square)" Foreground="#777" FontSize="10" Margin="60,2,0,0"/>
+            </StackPanel>
+        </nodify:Node>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:RerouteNodeViewModel}">
+        <nodify:Node Header="{Binding Title}" 
+                 Input="{Binding Inputs}" 
+                 Output="{Binding Outputs}"
+                 Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete" 
+                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
+                          CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}" 
+                                   Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                                   IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}" 
+                          Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                          IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <StackPanel Width="0" Margin="0">
+            </StackPanel>
+        </nodify:Node>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type nodes:ThresholdNodeViewModel}">
+        <nodify:Node Header="{Binding Title}" 
+                 Input="{Binding Inputs}" 
+                 Output="{Binding Outputs}"
+                 Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete" 
+                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
+                          CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}" 
+                                   Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                                   IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}" 
+                          Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                          IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <StackPanel Width="180" Margin="8">
+                <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Threshold" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Threshold, Mode=TwoWay, Delay=100}" TickFrequency="0.05" IsSnapToTickEnabled="True"/>
+                </Grid>
+
+                <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Softness" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Softness, Mode=TwoWay, Delay=100}" TickFrequency="0.05" IsSnapToTickEnabled="True"/>
+                </Grid>
             </StackPanel>
         </nodify:Node>
     </DataTemplate>

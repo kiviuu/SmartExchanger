@@ -69,6 +69,9 @@
                         </MenuItem>
 
                         <MenuItem Header="Middle Node">
+                            <MenuItem Header="Reroute"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.RerouteNode}"/>
                             <MenuItem Header="Perlin Noise Fractal Node"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.PerlinNoiseNode}"/>
@@ -78,6 +81,9 @@
                             <MenuItem Header="Blend Node"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.BlendNode}" />
+                            <MenuItem Header="Threshold Node"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.ThresholdNode}" />
                         </MenuItem>
 
                         <MenuItem Header="End Node">

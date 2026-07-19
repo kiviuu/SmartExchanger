@@ -5,10 +5,10 @@ namespace SmartExchanger.Views
 {
     public partial class MainView : Window
     {
-        public MainView()
+        public MainView(MainViewModel mainViewModel)
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            DataContext = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
             Closed += OnClosed;
         }
 

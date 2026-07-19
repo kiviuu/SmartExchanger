@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using SkiaSharp;
+using SmartExchanger.Services;
 using SmartExchanger.ViewModels.Nodes;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -23,6 +24,8 @@ namespace SmartExchanger.ViewModels
     /// </summary>
     public partial class EditorViewModel : ObservableObject, IDisposable
     {
+        private readonly IShaderService shaderService;
+
         private const int PreviewWidth = 256;
         private const int PreviewHeight = 256;
 
@@ -53,8 +56,9 @@ namespace SmartExchanger.ViewModels
         private bool _isRendering;
         private bool _isDisposed;
 
-        public EditorViewModel()
+        public EditorViewModel(IShaderService shaderService)
         {
+            this.shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
             SetupDefaultScene();
             UpdateConnectorStates();
         }
@@ -628,6 +632,8 @@ namespace SmartExchanger.ViewModels
                 NodeType.BlendNode => new BlendNodeViewModel(),
                 NodeType.TextureSizeNode => new TextureSizeNodeViewModel(),
                 NodeType.PerlinTurbulenceNode => new PerlinNoiseTurbulenceNodeViewModel(),
+                NodeType.RerouteNode => new RerouteNodeViewModel(),
+                NodeType.ThresholdNode => new ThresholdNodeViewModel(shaderService),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(nodeType), nodeType, "Unknown node type")
             };

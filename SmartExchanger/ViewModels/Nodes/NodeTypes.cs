@@ -11,6 +11,8 @@ namespace SmartExchanger.ViewModels.Nodes
         PerlinTurbulenceNode,
         OutputNode,
         BlendNode,
-        TextureSizeNode
+        TextureSizeNode,
+        RerouteNode,
+        ThresholdNode
     }
 }

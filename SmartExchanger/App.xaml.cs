@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using SmartExchanger.Services;
 
 namespace SmartExchanger
 {
@@ -27,10 +28,11 @@ namespace SmartExchanger
                     services.AddTransient<MainView>();
 
                     // view models
-                    services.AddTransient<ViewModels.MainViewModel>();
+                    services.AddTransient<EditorViewModel>();
+                    services.AddTransient<MainViewModel>();
 
                     //services
-                    //services.AddSingleton<Services.GraphService>();
+                    services.AddSingleton<IShaderService, ShaderService>();
                 })
                 .Build();
         }
