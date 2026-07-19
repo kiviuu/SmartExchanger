@@ -6,7 +6,8 @@ namespace SmartExchanger.Shaders
 {
     public enum Shader
     {
-        Threshold
+        Threshold,
+        Invert
     }
 
 
@@ -17,6 +18,7 @@ namespace SmartExchanger.Shaders
             return shader switch
             {
                 Shader.Threshold => "Threshold",
+                Shader.Invert => "Invert",
                 _ => shader.ToString()
             };
         }

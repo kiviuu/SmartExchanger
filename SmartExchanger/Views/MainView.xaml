@@ -62,32 +62,35 @@
             <nodify:NodifyEditor.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Create Node">
-                        <MenuItem Header="Start Node">
-                            <MenuItem Header="Color Node"
+                        <MenuItem Header="Start Nodes">
+                            <MenuItem Header="Color"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.ColorNode}"/>
                         </MenuItem>
 
-                        <MenuItem Header="Middle Node">
+                        <MenuItem Header="Middle Nodes">
                             <MenuItem Header="Reroute"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.RerouteNode}"/>
-                            <MenuItem Header="Perlin Noise Fractal Node"
+                            <MenuItem Header="Perlin Noise Fractal"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.PerlinNoiseNode}"/>
-                            <MenuItem Header="Perlin Noise Turbulence Node"
+                            <MenuItem Header="Perlin Noise Turbulence"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.PerlinTurbulenceNode}"/>
-                            <MenuItem Header="Blend Node"
+                            <MenuItem Header="Blend"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.BlendNode}" />
-                            <MenuItem Header="Threshold Node"
+                            <MenuItem Header="Threshold"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.ThresholdNode}" />
+                            <MenuItem Header="Invert"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.InvertNode}" />
                         </MenuItem>
 
-                        <MenuItem Header="End Node">
-                            <MenuItem Header="Output Node"
+                        <MenuItem Header="End Nodes">
+                            <MenuItem Header="Output"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.OutputNode}"/>
                         </MenuItem>

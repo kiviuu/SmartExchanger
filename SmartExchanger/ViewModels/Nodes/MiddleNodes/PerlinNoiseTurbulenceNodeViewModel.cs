@@ -3,7 +3,7 @@ using SkiaSharp;
 
 namespace SmartExchanger.ViewModels.Nodes
 {
-    public partial class PerlinNoiseFractalNodeViewModel : BaseNodeViewModel
+    public partial class PerlinNoiseTurbulenceNodeViewModel : BaseNodeViewModel
     {
         [ObservableProperty]
         private float _seed;
@@ -20,9 +20,9 @@ namespace SmartExchanger.ViewModels.Nodes
         public ConnectorViewModel InputConnector { get; }
         public ConnectorViewModel OutputConnector { get; }
 
-        public PerlinNoiseFractalNodeViewModel()
+        public PerlinNoiseTurbulenceNodeViewModel()
         {
-            Title = "Perlin Noise Fractal Node";
+            Title = "Perlin Noise Turbulence";
 
             InputConnector = new ConnectorViewModel(this, "In");
             OutputConnector = new ConnectorViewModel(this, "Out");
@@ -45,7 +45,7 @@ namespace SmartExchanger.ViewModels.Nodes
                 canvas.DrawImage(input, destination, new SKSamplingOptions());
             }
 
-            using var shader = SKShader.CreatePerlinNoiseFractalNoise(FrequencyX, FrequencyY, Math.Max(0, Octaves), Seed);
+            using var shader = SKShader.CreatePerlinNoiseTurbulence(FrequencyX, FrequencyY, Math.Max(0, Octaves), Seed);
 
             using var paint = new SKPaint
             {

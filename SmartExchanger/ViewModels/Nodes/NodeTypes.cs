@@ -13,6 +13,7 @@ namespace SmartExchanger.ViewModels.Nodes
         BlendNode,
         TextureSizeNode,
         RerouteNode,
-        ThresholdNode
+        ThresholdNode,
+        InvertNode
     }
 }

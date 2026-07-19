@@ -24,7 +24,7 @@ namespace SmartExchanger.ViewModels.Nodes
 
         public OutputNodeViewModel()
         {
-            Title = "Output Node";
+            Title = "Output";
             InputConnector = new ConnectorViewModel(this, "In");
             Inputs.Add(InputConnector);
         }

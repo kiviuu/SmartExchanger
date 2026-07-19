@@ -21,7 +21,7 @@ namespace SmartExchanger.ViewModels.Nodes
 
         public BlendNodeViewModel()
         {
-            Title = "Blend Node";
+            Title = "Blend";
 
             InputAConnector = new ConnectorViewModel(this, "A");
             InputBConnector = new ConnectorViewModel(this, "B");

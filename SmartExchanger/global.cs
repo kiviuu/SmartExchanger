@@ -7,3 +7,4 @@ global using System.Windows;
 global using SmartExchanger.Views;
 global using SmartExchanger.ViewModels;
 global using Microsoft.Extensions.Http;
+global using SmartExchanger.ViewModels.Nodes;

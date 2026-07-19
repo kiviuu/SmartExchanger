@@ -5,47 +5,43 @@ using SmartExchanger.Shaders;
 
 namespace SmartExchanger.ViewModels.Nodes
 {
-    public partial class ThresholdNodeViewModel : BaseNodeViewModel
+    public partial class InvertNodeViewModel : BaseNodeViewModel
     {
-        [ObservableProperty]
-        private float _threshold = 0.5f;
+        private readonly IShaderService _shaderService;
 
         [ObservableProperty]
-        private float _softness = 0.5f;
+        private float _strength = 0.0f;
 
         public ConnectorViewModel InputConnector { get; }
         public ConnectorViewModel OutputConnector { get; }
-        private IShaderService _shaderService;
-        public ThresholdNodeViewModel(IShaderService shaderService)
+
+
+        public InvertNodeViewModel(IShaderService shaderService)
         {
             this._shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
-
-            Title = "Threshold Node";
+            Title = "Invert";
             InputConnector = new ConnectorViewModel(this, "In");
             OutputConnector = new ConnectorViewModel(this, "Out");
             Inputs.Add(InputConnector);
             Outputs.Add(OutputConnector);
 
-            _shaderService.CreateCompiledShader(Shader.Threshold);
+            this._shaderService.CreateCompiledShader(Shader.Invert);
         }
-
         public override SKImage? Render(GRContext context, int size, NodeRenderInputs inputs)
         {
             using var surface = CreateGpuSurface(context, size);
             var canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
-            var destination = new SKRect(0,0,size,size);
+            var destination = new SKRect(0, 0, size, size);
             var input = inputs.Get(InputConnector);
-
             if (input is not null)
             {
                 canvas.DrawImage(input, destination, new SKSamplingOptions());
             }
-            SKRuntimeEffect effect = _shaderService.GetCompiledShader(Shader.Threshold);
+            SKRuntimeEffect effect = _shaderService.GetCompiledShader(Shader.Invert);
             using var uniforms = new SKRuntimeEffectUniforms(effect)
             {
-                ["threshold"] = Math.Clamp(Threshold, 0.0f, 1.0f),
-                ["softness"] = Math.Clamp(Softness, 0.0f, 1.0f)
+                ["strength"] = Strength
             };
             using var inputShader = input?.ToShader(SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
             using var children = new SKRuntimeEffectChildren(effect)

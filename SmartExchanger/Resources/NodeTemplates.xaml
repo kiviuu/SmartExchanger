@@ -364,7 +364,6 @@
             </StackPanel>
         </nodify:Node>
     </DataTemplate>
-
     <DataTemplate DataType="{x:Type nodes:ThresholdNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
                  Input="{Binding Inputs}" 
@@ -412,6 +411,48 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Softness" FontWeight="Bold" VerticalAlignment="Center"/>
                     <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Softness, Mode=TwoWay, Delay=100}" TickFrequency="0.05" IsSnapToTickEnabled="True"/>
+                </Grid>
+            </StackPanel>
+        </nodify:Node>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:InvertNodeViewModel}">
+        <nodify:Node Header="{Binding Title}" 
+             Input="{Binding Inputs}" 
+             Output="{Binding Outputs}"
+             Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete" 
+                      Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
+                      CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}" 
+                               Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                               IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}" 
+                      Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                      IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <StackPanel Width="180" Margin="8">
+                <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Threshold" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Strength, Mode=TwoWay, Delay=100}" TickFrequency="0.05" IsSnapToTickEnabled="True"/>
                 </Grid>
             </StackPanel>
         </nodify:Node>

@@ -634,6 +634,7 @@ namespace SmartExchanger.ViewModels
                 NodeType.PerlinTurbulenceNode => new PerlinNoiseTurbulenceNodeViewModel(),
                 NodeType.RerouteNode => new RerouteNodeViewModel(),
                 NodeType.ThresholdNode => new ThresholdNodeViewModel(shaderService),
+                NodeType.InvertNode => new InvertNodeViewModel(shaderService),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(nodeType), nodeType, "Unknown node type")
             };
