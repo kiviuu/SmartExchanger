@@ -608,6 +608,9 @@ namespace SmartExchanger.ViewModels
             InvalidateGraph(requestGpuPurge: true);
         }
 
+
+
+        /* TODO: maybe some reflection ? */
         [RelayCommand]
         private void CreateNode(NodeType nodeType)
         {
@@ -635,6 +638,7 @@ namespace SmartExchanger.ViewModels
                 NodeType.RerouteNode => new RerouteNodeViewModel(),
                 NodeType.ThresholdNode => new ThresholdNodeViewModel(shaderService),
                 NodeType.InvertNode => new InvertNodeViewModel(shaderService),
+                NodeType.WorleyNoiseNode => new WorleyNoiseNodeViewModel(shaderService),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(nodeType), nodeType, "Unknown node type")
             };

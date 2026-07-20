@@ -7,13 +7,13 @@ namespace SmartExchanger.ViewModels.Nodes
     public partial class ColorNodeViewModel : BaseNodeViewModel
     {
         [ObservableProperty]
-        private byte _r = 128;
+        private byte _r = 255;
 
         [ObservableProperty]
-        private byte _g;
+        private byte _g = 255;
 
         [ObservableProperty]
-        private byte _b = 128;
+        private byte _b = 255;
 
         public ConnectorViewModel OutputConnector { get; }
 

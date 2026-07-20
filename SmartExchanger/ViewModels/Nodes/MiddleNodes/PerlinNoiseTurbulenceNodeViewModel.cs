@@ -45,15 +45,33 @@ namespace SmartExchanger.ViewModels.Nodes
                 canvas.DrawImage(input, destination, new SKSamplingOptions());
             }
 
+
             using var shader = SKShader.CreatePerlinNoiseTurbulence(FrequencyX, FrequencyY, Math.Max(0, Octaves), Seed);
+
+
+
+            const float redWeight = 0.2126f;
+            const float greenWeight = 0.7152f;
+            const float blueWeight = 0.0722f;
+
+            float[] grayscaleMatrix =
+            {
+                redWeight, greenWeight, blueWeight, 0f, 0f,
+                redWeight, greenWeight, blueWeight, 0f, 0f,
+                redWeight, greenWeight, blueWeight, 0f, 0f,
+                0f, 0f, 0f, 0f, 255f
+            };
+
+            using var greyScaleFilter = SKColorFilter.CreateColorMatrix(grayscaleMatrix);
 
             using var paint = new SKPaint
             {
                 Shader = shader,
-                BlendMode = SKBlendMode.Multiply
+                ColorFilter = greyScaleFilter,
+                BlendMode = input is null ? SKBlendMode.Src : SKBlendMode.Multiply
             };
-
             canvas.DrawRect(destination, paint);
+
             return surface.Snapshot();
         }
     }

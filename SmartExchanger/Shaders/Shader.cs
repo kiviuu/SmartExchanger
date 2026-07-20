@@ -7,7 +7,8 @@ namespace SmartExchanger.Shaders
     public enum Shader
     {
         Threshold,
-        Invert
+        Invert,
+        WorleyNoise
     }
 
 
@@ -19,6 +20,7 @@ namespace SmartExchanger.Shaders
             {
                 Shader.Threshold => "Threshold",
                 Shader.Invert => "Invert",
+                Shader.WorleyNoise => "WorleyNoise",
                 _ => shader.ToString()
             };
         }

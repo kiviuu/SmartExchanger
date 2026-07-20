@@ -1,0 +1,41 @@
+// kind=shader
+
+uniform float2 resolution;
+uniform float scale;
+uniform float jitter;
+uniform float seed;
+uniform shader inputImage;
+
+float2 hash22(float2 p)
+{
+    float n1 = dot(p, float2(127.1, 311.7)) + seed * 17.0;
+    float n2 = dot(p, float2(269.5, 183.3)) + seed * 29.0;
+
+    return fract(sin(float2(n1, n2)) * 43758.5453123);
+}
+
+half4 main(float2 position){
+    float2 uv = position / resolution;
+    float2 p = uv * scale;
+    float2 cell = floor(p);
+    float2 local = fract(p);
+
+    float minDist = 999999.0;
+    for(int y = -1 ; y <= 1; y++){
+        for(int x = -1; x <= 1; x++){
+            float2 neighbor = float2(x,y);
+            float2 randomPoint = hash22(cell+neighbor);
+            randomPoint = 0.5 + (randomPoint - 0.5) * jitter;
+
+            float2 diff = neighbor + randomPoint - local;
+            float dist = length(diff);
+            minDist = min(minDist, dist);
+
+        }
+    }
+    float value = clamp(minDist/1.41421356, 0.0, 1.0);
+    value = 1.0 - value;
+    half4 color = inputImage.eval(position);
+    half3 result = color.rgb * value;
+    return half4(result, color.a);
+}

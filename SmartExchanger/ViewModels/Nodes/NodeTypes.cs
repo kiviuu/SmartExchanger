@@ -14,6 +14,7 @@ namespace SmartExchanger.ViewModels.Nodes
         TextureSizeNode,
         RerouteNode,
         ThresholdNode,
-        InvertNode
+        InvertNode,
+        WorleyNoiseNode
     }
 }
