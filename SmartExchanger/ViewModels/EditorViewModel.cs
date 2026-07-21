@@ -378,7 +378,9 @@ namespace SmartExchanger.ViewModels
 
             var canvas = previewSurface.Canvas;
             canvas.Clear(SKColors.Transparent);
-            canvas.DrawImage(source, new SKRect(0, 0, width, height), new SKSamplingOptions());
+
+            var prevewSampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
+            canvas.DrawImage(source, new SKRect(0, 0, width, height), prevewSampling);
 
             // ReadPixels copy data from GPU into small CPU buffor - this process required preview surface rendering completion
             context.Flush(submit: true, synchronous: true);
@@ -639,6 +641,8 @@ namespace SmartExchanger.ViewModels
                 NodeType.ThresholdNode => new ThresholdNodeViewModel(shaderService),
                 NodeType.InvertNode => new InvertNodeViewModel(shaderService),
                 NodeType.WorleyNoiseNode => new WorleyNoiseNodeViewModel(shaderService),
+                NodeType.ValueNode => new ValueNodeViewModel(),
+                NodeType.HeightToNormalNode => new HeightToNormalNodeViewModel(shaderService),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(nodeType), nodeType, "Unknown node type")
             };

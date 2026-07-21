@@ -1,0 +1,31 @@
+// kind=shader
+uniform shader inputImage;
+uniform float invertY;
+uniform float strength;
+uniform float2 resolution;
+
+float getHeight(float2 position){
+    float4 color = inputImage.eval(position);
+    return dot(color.rgb, float3(0.2126, 0.7152, 0.0722));
+}
+
+
+half4 main(float2 position){
+    float heightLeft = float( getHeight(position + float2(-1.0, 0.0)) );
+    float heightRight = float( getHeight(position + float2(1.0, 0.0)) );
+
+    float heightUp = float( getHeight(position + float2(0.0, -1.0)) );
+    float heightDown = float( getHeight(position + float2(0.0, 1.0)) );
+
+    float2 resolutionScale = resolution / 256.0;
+
+    float dx = (heightRight - heightLeft) * 0.5 * resolutionScale.x * strength;
+    float dy = (heightDown - heightUp) * 0.5 * resolutionScale.y * strength;
+
+    float3 normal = normalize( float3(-dx, -dy, 1.0) );
+    if (invertY > 0.5){
+        normal.y = -normal.y;
+    }
+    float3 encodedNormal = normal * 0.5 + 0.5;
+    return half4( half3(encodedNormal), 1.0 );
+}

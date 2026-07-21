@@ -35,6 +35,7 @@ half4 main(float2 position){
     }
     float value = clamp(minDist/1.41421356, 0.0, 1.0);
     value = 1.0 - value;
+    value = smoothstep(0.0, 1.0, value);
     half4 color = inputImage.eval(position);
     half3 result = color.rgb * value;
     return half4(result, color.a);

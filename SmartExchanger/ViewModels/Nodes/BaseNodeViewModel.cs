@@ -62,7 +62,7 @@ namespace SmartExchanger.ViewModels.Nodes
                 throw new ArgumentOutOfRangeException(nameof(size));
             }
 
-            var info = new SKImageInfo(size, size, SKColorType.Rgba8888, SKAlphaType.Premul);
+            var info = new SKImageInfo(size, size, SKColorType.RgbaF16, SKAlphaType.Premul);
 
             return SKSurface.Create(context, true, info)
                    ?? throw new InvalidOperationException(

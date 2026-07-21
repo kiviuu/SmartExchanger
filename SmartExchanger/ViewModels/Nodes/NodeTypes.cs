@@ -15,6 +15,8 @@ namespace SmartExchanger.ViewModels.Nodes
         RerouteNode,
         ThresholdNode,
         InvertNode,
-        WorleyNoiseNode
+        WorleyNoiseNode,
+        ValueNode,
+        HeightToNormalNode
     }
 }

@@ -66,6 +66,9 @@
                             <MenuItem Header="Color"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.ColorNode}"/>
+                            <MenuItem Header="Value"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.ValueNode}" />
                         </MenuItem>
 
                         <MenuItem Header="Middle Nodes">
@@ -90,6 +93,9 @@
                             <MenuItem Header="Invert"
                                       Command="{Binding CreateNodeCommand}"
                                       CommandParameter="{x:Static nodes:NodeType.InvertNode}" />
+                            <MenuItem Header="Height To Normal"
+                                      Command="{Binding CreateNodeCommand}"
+                                      CommandParameter="{x:Static nodes:NodeType.HeightToNormalNode}" />
                         </MenuItem>
 
                         <MenuItem Header="End Nodes">

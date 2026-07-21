@@ -8,7 +8,8 @@ namespace SmartExchanger.Shaders
     {
         Threshold,
         Invert,
-        WorleyNoise
+        WorleyNoise,
+        HeightToNormal
     }
 
 
@@ -21,6 +22,7 @@ namespace SmartExchanger.Shaders
                 Shader.Threshold => "Threshold",
                 Shader.Invert => "Invert",
                 Shader.WorleyNoise => "WorleyNoise",
+                Shader.HeightToNormal => "HeightToNormal",
                 _ => shader.ToString()
             };
         }
