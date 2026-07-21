@@ -7,7 +7,8 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         xmlns:helpers="clr-namespace:SmartExchanger.Helpers"
-        Title="Smart Exchanger" Height="650" Width="950"
+        xmlns:views="clr-namespace:SmartExchanger.Views"
+        Title="Smart Exchanger" Height="720" Width="1280"
         ResizeMode="CanResize"
         Background="#1E1E1E">
     <Window.Resources>
@@ -23,92 +24,111 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Grid>
-        <skia:SKGLElement helpers:SkiaExtensions.Editor="{Binding Editor}"
-                          Width="1"
-                          Height="1"
-                          HorizontalAlignment="Left"
-                          VerticalAlignment="Top"
-                          IsHitTestVisible="False"
-                          Opacity="0.001"
-                          Panel.ZIndex="1000" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="340"
+                              MinWidth="260"/>
+        </Grid.ColumnDefinitions>
 
-        <nodify:NodifyEditor DataContext="{Binding Editor}"
-                     ItemsSource="{Binding Nodes}" 
-                     Connections="{Binding Connections}"
-                     SelectedConnections="{Binding SelectedConnections}"
-                     ConnectionStartedCommand="{Binding StartConnectionCommand}"
-                     ConnectionCompletedCommand="{Binding CompleteConnectionCommand}"
-                     DisconnectConnectorCommand="{Binding DisconnectConnectorCommand}"
-                     GridCellSize="15"
-                     Background="#151515"
-                     Tag="{Binding}">
-            <nodify:NodifyEditor.InputBindings>
-                <KeyBinding Key="Delete" Command="{Binding DeleteSelectionCommand}" />
-            </nodify:NodifyEditor.InputBindings>
-            <nodify:NodifyEditor.ItemContainerStyle>
-                <Style TargetType="{x:Type nodify:ItemContainer}">
-                    <Setter Property="Location" Value="{Binding Location, Mode=TwoWay}" />
-                </Style>
-            </nodify:NodifyEditor.ItemContainerStyle>
+        <Grid Grid.Column="0">
+            <skia:SKGLElement helpers:SkiaExtensions.Editor="{Binding Editor}"
+                              Width="1"
+                              Height="1"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Top"
+                              IsHitTestVisible="False"
+                              Opacity="0.001"
+                              Panel.ZIndex="1000" />
 
-            <nodify:NodifyEditor.ConnectionTemplate>
-                <DataTemplate DataType="{x:Type vm:ConnectionViewModel}">
-                    <nodify:CircuitConnection Source="{Binding Source.Anchor}" 
-                                              Target="{Binding Target.Anchor}" />
-                </DataTemplate>
-            </nodify:NodifyEditor.ConnectionTemplate>
+            <nodify:NodifyEditor DataContext="{Binding Editor}"
+                         ItemsSource="{Binding Nodes}" 
+                         Connections="{Binding Connections}"
+                         SelectedConnections="{Binding SelectedConnections}"
+                         ConnectionStartedCommand="{Binding StartConnectionCommand}"
+                         ConnectionCompletedCommand="{Binding CompleteConnectionCommand}"
+                         DisconnectConnectorCommand="{Binding DisconnectConnectorCommand}"
+                         GridCellSize="15"
+                         Background="#151515"
+                         Tag="{Binding}">
+                <nodify:NodifyEditor.InputBindings>
+                    <KeyBinding Key="Delete" Command="{Binding DeleteSelectionCommand}" />
+                </nodify:NodifyEditor.InputBindings>
+                <nodify:NodifyEditor.ItemContainerStyle>
+                    <Style TargetType="{x:Type nodify:ItemContainer}">
+                        <Setter Property="Location" Value="{Binding Location, Mode=TwoWay}" />
+                    </Style>
+                </nodify:NodifyEditor.ItemContainerStyle>
+
+                <nodify:NodifyEditor.ConnectionTemplate>
+                    <DataTemplate DataType="{x:Type vm:ConnectionViewModel}">
+                        <nodify:CircuitConnection Source="{Binding Source.Anchor}" 
+                                                  Target="{Binding Target.Anchor}" />
+                    </DataTemplate>
+                </nodify:NodifyEditor.ConnectionTemplate>
 
 
-            <nodify:NodifyEditor.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Create Node">
-                        <MenuItem Header="Start Nodes">
-                            <MenuItem Header="Color"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.ColorNode}"/>
-                            <MenuItem Header="Value"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.ValueNode}" />
+                <nodify:NodifyEditor.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Create Node">
+                            <MenuItem Header="Start Nodes">
+                                <MenuItem Header="Color"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.ColorNode}"/>
+                                <MenuItem Header="Value"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.ValueNode}" />
+                            </MenuItem>
+
+                            <MenuItem Header="Middle Nodes">
+                                <MenuItem Header="Reroute"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.RerouteNode}"/>
+                                <MenuItem Header="Perlin Noise Fractal"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.PerlinNoiseNode}"/>
+                                <MenuItem Header="Perlin Noise Turbulence"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.PerlinTurbulenceNode}"/>
+                                <MenuItem Header="Worley Noise"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.WorleyNoiseNode}"/>
+                                <MenuItem Header="Blend"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.BlendNode}" />
+                                <MenuItem Header="Threshold"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.ThresholdNode}" />
+                                <MenuItem Header="Invert"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.InvertNode}" />
+                                <MenuItem Header="Height To Normal"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.HeightToNormalNode}" />
+                            </MenuItem>
+
+                            <MenuItem Header="End Nodes">
+                                <MenuItem Header="Output"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.OutputNode}"/>
+                            </MenuItem>
                         </MenuItem>
+                        <Separator />
+                        <MenuItem Header="Clear workspace"
+                                  Command="{Binding ClearWorkspaceCommand}" />
+                    </ContextMenu>
+                </nodify:NodifyEditor.ContextMenu>
+            </nodify:NodifyEditor>
+        </Grid>
+        <GridSplitter Grid.Column="1"
+                      Width="5"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      Background="#303030"
+                      ResizeDirection="Columns"
+                      ResizeBehavior="PreviousAndNext"/>
 
-                        <MenuItem Header="Middle Nodes">
-                            <MenuItem Header="Reroute"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.RerouteNode}"/>
-                            <MenuItem Header="Perlin Noise Fractal"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.PerlinNoiseNode}"/>
-                            <MenuItem Header="Perlin Noise Turbulence"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.PerlinTurbulenceNode}"/>
-                            <MenuItem Header="Worley Noise"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.WorleyNoiseNode}"/>
-                            <MenuItem Header="Blend"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.BlendNode}" />
-                            <MenuItem Header="Threshold"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.ThresholdNode}" />
-                            <MenuItem Header="Invert"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.InvertNode}" />
-                            <MenuItem Header="Height To Normal"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.HeightToNormalNode}" />
-                        </MenuItem>
-
-                        <MenuItem Header="End Nodes">
-                            <MenuItem Header="Output"
-                                      Command="{Binding CreateNodeCommand}"
-                                      CommandParameter="{x:Static nodes:NodeType.OutputNode}"/>
-                        </MenuItem>
-                    </MenuItem>
-                    <Separator />
-                    <MenuItem Header="Clear workspace"
-                              Command="{Binding ClearWorkspaceCommand}" />
-                </ContextMenu>
-            </nodify:NodifyEditor.ContextMenu>
-        </nodify:NodifyEditor>
+        <views:MaterialPreviewView Grid.Column="2"
+                                   DataContext="{Binding MaterialPreview}" />
     </Grid>
 </Window>

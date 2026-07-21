@@ -362,8 +362,6 @@ namespace SmartExchanger.ViewModels
             }
             finally
             {
-                // Finalny obraz 4K nie jest cache'owany. Po utworzeniu podglądu 256x256
-                // natychmiast zwalniamy jego wrapper i natywną referencję Skia.
                 finalImage?.Dispose();
             }
         }
@@ -485,8 +483,6 @@ namespace SmartExchanger.ViewModels
                         if (outputConnection is not null &&
                             liveImages.Remove(outputConnection.Source.Node, out var finalImage))
                         {
-                            // Transfer własności: finalImage wychodzi z metody i nie zostanie
-                            // zwolniony przez blok finally.
                             outputImage = finalImage;
                         }
 
@@ -1082,9 +1078,7 @@ namespace SmartExchanger.ViewModels
                 _ => throw new ArgumentOutOfRangeException(nameof(format))
             };
 
-            return Path.ChangeExtension(
-                filePath,
-                defaultExtension);
+            return Path.ChangeExtension(filePath, defaultExtension);
         }
     }
 }

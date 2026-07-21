@@ -6,10 +6,12 @@ namespace SmartExchanger.ViewModels
     {
         private bool _isDisposed;
         public EditorViewModel Editor { get; }
+        public MaterialPreviewViewModel MaterialPreview { get; }
 
-        public MainViewModel(EditorViewModel editorViewModel)
+        public MainViewModel(EditorViewModel editorViewModel, MaterialPreviewViewModel materialPreviewViewModel)
         {
             this.Editor = editorViewModel ?? throw new ArgumentNullException(nameof(editorViewModel));
+            this.MaterialPreview = materialPreviewViewModel ?? throw new ArgumentNullException(nameof(materialPreviewViewModel));
         }
         public void Dispose()
         {
@@ -19,6 +21,7 @@ namespace SmartExchanger.ViewModels
             }
             _isDisposed = true;
             Editor.Dispose();
+            MaterialPreview.Dispose();
             GC.SuppressFinalize(this);
         }
     }
