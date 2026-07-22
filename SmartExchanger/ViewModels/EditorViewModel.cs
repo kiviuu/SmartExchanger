@@ -1,13 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Win32;
 using SkiaSharp;
+using SmartExchanger.Models;
 using SmartExchanger.Services;
-using SmartExchanger.ViewModels.Nodes;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Drawing.Imaging;
 using System.IO;
+using System.IO.Packaging;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -43,6 +44,10 @@ namespace SmartExchanger.ViewModels
         private ConnectorViewModel? _pendingSourceConnector;
 
         private readonly Queue<PendingExportRequest> _pendingExports = new();
+
+        private const int _materialPreviewTextureSize = 512;
+        public event Action<MaterialPreviewFrame>? MaterialPreviewFrameReady;
+
 
         // One persistnet SKGElement is the owner of this GRContext
         private GRContext? _graphicsContext;
@@ -316,6 +321,7 @@ namespace SmartExchanger.ViewModels
                         RenderOutputPreview(output, context, textureSize);
                     }
 
+                    RenderMaterialPreview(context);
                     _renderedGraphRevision = _graphRevision;
                 }
                 ProcessPendingExports(context);
@@ -437,16 +443,28 @@ namespace SmartExchanger.ViewModels
         /// Render one path leading to the targeted OutputNodeVM
         /// Returns final SKImage whose owner is invoking object
         /// </summary>
+        /// 
         private SKImage? BuildOutputImage(OutputNodeViewModel targetOutput, GRContext context, int textureSize)
         {
-            var sortedNodes = GetTopologicallySortedNodes(targetOutput);
+            // this is wrapper for existing usages
+            return BuildImageForInput(
+                targetOutput,
+                targetOutput.InputConnector,
+                context,
+                textureSize);
+        }
+
+        private SKImage? BuildImageForInput(BaseNodeViewModel targetNode, ConnectorViewModel targetInput,GRContext context, int textureSize)
+        {
+            var sortedNodes = GetTopologicallySortedNodes(targetNode, targetInput);
             var reachableNodes = new HashSet<BaseNodeViewModel>(
                 sortedNodes,
                 ReferenceComparer<BaseNodeViewModel>.Instance);
 
             var relevantConnections = Connections
                 .Where(c => reachableNodes.Contains(c.Source.Node) &&
-                            reachableNodes.Contains(c.Target.Node))
+                            reachableNodes.Contains(c.Target.Node) &&
+                            (c.Target.Node != targetNode || c.Target == targetInput))
                 .ToList();
 
             var incomingByNode = relevantConnections
@@ -466,24 +484,24 @@ namespace SmartExchanger.ViewModels
             var liveImages = new Dictionary<BaseNodeViewModel, SKImage>(
                 ReferenceComparer<BaseNodeViewModel>.Instance);
 
-            SKImage? outputImage = null;
+            SKImage? resultImage = null;
 
             try
             {
                 foreach (var node in sortedNodes)
                 {
-                    incomingByNode.TryGetValue(node, out var incoming);
-                    incoming ??= new List<ConnectionViewModel>();
+                    incomingByNode.TryGetValue(node, out var incomingConnections);
+                    incomingConnections ??= new List<ConnectionViewModel>();
 
-                    if (node == targetOutput)
+                    if (node == targetNode)
                     {
-                        var outputConnection = incoming.FirstOrDefault(
-                            c => c.Target == targetOutput.InputConnector);
+                        var finalConnection = incomingConnections.FirstOrDefault(
+                            c => c.Target == targetInput);
 
-                        if (outputConnection is not null &&
-                            liveImages.Remove(outputConnection.Source.Node, out var finalImage))
+                        if (finalConnection is not null &&
+                            liveImages.Remove(finalConnection.Source.Node, out var finalImage))
                         {
-                            outputImage = finalImage;
+                            resultImage = finalImage;
                         }
 
                         continue;
@@ -491,12 +509,12 @@ namespace SmartExchanger.ViewModels
 
                     if (!node.ProducesTexture)
                     {
-                        ReleaseConsumedInputs(incoming, remainingConsumers, liveImages);
+                        ReleaseConsumedInputs(incomingConnections, remainingConsumers, liveImages);
                         continue;
                     }
 
                     var inputImages = new Dictionary<ConnectorViewModel, SKImage>();
-                    foreach (var connection in incoming)
+                    foreach (var connection in incomingConnections)
                     {
                         if (liveImages.TryGetValue(connection.Source.Node, out var sourceImage))
                         {
@@ -521,15 +539,15 @@ namespace SmartExchanger.ViewModels
                         liveImages[node] = renderedImage;
                     }
 
-                    ReleaseConsumedInputs(incoming, remainingConsumers, liveImages);
+                    ReleaseConsumedInputs(incomingConnections, remainingConsumers, liveImages);
                 }
 
-                return outputImage;
+                return resultImage;
             }
             catch
             {
-                outputImage?.Dispose();
-                outputImage = null;
+                resultImage?.Dispose();
+                resultImage = null;
                 throw;
             }
             finally
@@ -617,8 +635,14 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
+            // only one TextureSize node and only one MaterialOutputNode
             if (nodeType == NodeType.TextureSizeNode &&
                 Nodes.OfType<TextureSizeNodeViewModel>().Any())
+            {
+                return;
+            }
+            if (nodeType == NodeType.MaterialOutputNode &&
+                Nodes.OfType<MaterialOutputNodeViewModel>().Any())
             {
                 return;
             }
@@ -639,6 +663,7 @@ namespace SmartExchanger.ViewModels
                 NodeType.WorleyNoiseNode => new WorleyNoiseNodeViewModel(shaderService),
                 NodeType.ValueNode => new ValueNodeViewModel(),
                 NodeType.HeightToNormalNode => new HeightToNormalNodeViewModel(shaderService),
+                NodeType.MaterialOutputNode => new MaterialOutputNodeViewModel(),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(nodeType), nodeType, "Unknown node type")
             };
@@ -686,13 +711,26 @@ namespace SmartExchanger.ViewModels
         }
 
         private List<BaseNodeViewModel> GetTopologicallySortedNodes(
-            OutputNodeViewModel targetOutput)
+            BaseNodeViewModel targetNode, ConnectorViewModel targetInput)
         {
             var sorted = new List<BaseNodeViewModel>();
             var states = new Dictionary<BaseNodeViewModel, VisitState>(
                 ReferenceComparer<BaseNodeViewModel>.Instance);
 
-            VisitNode(targetOutput, states, sorted);
+            var terminalConnection = Connections.FirstOrDefault(c => c.Target == targetInput);
+
+            if (terminalConnection is not null &&
+                Nodes.Contains(terminalConnection.Source.Node))
+            {
+                VisitNode(terminalConnection.Source.Node, states, sorted);
+            }
+
+            /*
+             * Końcowy node dodajemy jako ostatni.
+             * Sam nie generuje tekstury — odbiera wynik.
+             */
+            sorted.Add(targetNode);
+
             return sorted;
         }
         private void VisitNode(BaseNodeViewModel node, Dictionary<BaseNodeViewModel, VisitState> states, List<BaseNodeViewModel> sorted)
@@ -1079,6 +1117,108 @@ namespace SmartExchanger.ViewModels
             };
 
             return Path.ChangeExtension(filePath, defaultExtension);
+        }
+
+
+        // For material
+        private void RenderMaterialPreview(GRContext context)
+        {
+            var materialOutput = Nodes.OfType<MaterialOutputNodeViewModel>().FirstOrDefault();
+            if (materialOutput is null)
+            {
+                PublishMaterialPreview(MaterialPreviewFrame.Empty);
+                return;
+            }
+
+            using SKImage? baseColorImage = BuildImageForInput(materialOutput, materialOutput.BaseColorConnector, context, _materialPreviewTextureSize);
+
+            using SKImage? normalImage = BuildImageForInput(materialOutput, materialOutput.NormalConnector, context, _materialPreviewTextureSize);
+
+            byte[]? baseColorPng = baseColorImage is null ? null :
+                EncodeMaterialPreviewTexture(context, baseColorImage, _materialPreviewTextureSize);
+            byte[]? normalPng = normalImage is null ? null :
+                EncodeMaterialPreviewTexture(context, normalImage, _materialPreviewTextureSize);
+
+            using SKImage? roughnessImage = BuildImageForInput(materialOutput, materialOutput.RoughnessConnector, context, _materialPreviewTextureSize);
+
+            using SKImage? metallicImage = BuildImageForInput(materialOutput, materialOutput.MetallicConnector, context, _materialPreviewTextureSize);
+            SKImage? roughnessMetallicImage = null;
+            try
+            {
+                if (roughnessImage is not null ||
+                    metallicImage is not null)
+                {
+                    roughnessMetallicImage =BuildRoughnessMetallicImage(context, _materialPreviewTextureSize, roughnessImage, metallicImage);
+                }
+
+                byte[]? roughnessMetallicPng =
+                    roughnessMetallicImage is null
+                        ? null
+                        : EncodeMaterialPreviewTexture(context, roughnessMetallicImage, _materialPreviewTextureSize);
+
+                PublishMaterialPreview(
+                    new MaterialPreviewFrame(
+                        BaseColorPng: baseColorPng,
+                        NormalPng: normalPng,
+                        RoughnessMetallicPng:roughnessMetallicPng
+                        ));
+            }
+            finally
+            {
+                roughnessMetallicImage?.Dispose();
+            }
+        }
+
+        private static byte[] EncodeMaterialPreviewTexture(GRContext context, SKImage source, int size)
+        {
+            using var bitmap = CreatePreviewBitmap(context, source, size, size);
+            using var cpuImage = SKImage.FromBitmap(bitmap);
+            using var encodedData = cpuImage.Encode(SKEncodedImageFormat.Png, quality: 100) ??
+                throw new InvalidOperationException("SkiaSharp failed to encode the material preview.");
+            return encodedData.ToArray();
+        }
+
+        private void PublishMaterialPreview(MaterialPreviewFrame frame)
+        {
+            try
+            {
+                MaterialPreviewFrameReady?.Invoke(frame);
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine($"[Material Preview] Update failed: {ex}");
+            }
+        }
+
+        private SKImage BuildRoughnessMetallicImage(GRContext context, int size, SKImage? roughnessImage, SKImage? metallicImage)
+        {
+            var info = new SKImageInfo(size, size, SKColorType.RgbaF16, SKAlphaType.Opaque);
+            using var surface = SKSurface.Create(context, true, info) ?? throw new InvalidOperationException("Could not create the Roughness/Metallic GPU surface");
+            SKRuntimeEffect effect = shaderService.GetCompiledShader(Shaders.Shader.PackRoughnessMetallic);
+
+            // without Roughness: default value = 0.5
+            using SKShader roughnessShader = roughnessImage is null ? SKShader.CreateColor(new SKColor(128,128,128,255)) :
+                roughnessImage.ToShader(SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
+
+            // without Metallic: default value = 0.0
+            using SKShader metallicShader = metallicImage is null ? SKShader.CreateColor(new SKColor(0,0,0,255)) :
+                metallicImage.ToShader(SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
+            using var uniforms = new SKRuntimeEffectUniforms(effect);
+            using var children = new SKRuntimeEffectChildren(effect)
+            {
+                ["roughnessImage"] = roughnessShader,
+                ["metallicImage"] = metallicShader
+            };
+            using var packedShader = effect.ToShader(uniforms: uniforms, children: children) ?? throw new InvalidOperationException("Could not create the Roughness/Metallic shader");
+            using var paint = new SKPaint
+            {
+                Shader = packedShader,
+                BlendMode = SKBlendMode.Src
+            };
+            var destination = new SKRect(0, 0, size, size);
+            surface.Canvas.Clear(SKColors.Transparent);
+            surface.Canvas.DrawRect(destination, paint);
+            return surface.Snapshot();
         }
     }
 }

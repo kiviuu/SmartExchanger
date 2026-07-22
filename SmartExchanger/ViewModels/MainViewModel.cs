@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using SmartExchanger.Models;
 
 namespace SmartExchanger.ViewModels
 {
@@ -12,6 +13,11 @@ namespace SmartExchanger.ViewModels
         {
             this.Editor = editorViewModel ?? throw new ArgumentNullException(nameof(editorViewModel));
             this.MaterialPreview = materialPreviewViewModel ?? throw new ArgumentNullException(nameof(materialPreviewViewModel));
+            this.Editor.MaterialPreviewFrameReady += OnMaterialPreviewReady;
+        }
+        private void OnMaterialPreviewReady(MaterialPreviewFrame frame)
+        {
+            MaterialPreview.ApplyPreview(frame);
         }
         public void Dispose()
         {
@@ -20,6 +26,9 @@ namespace SmartExchanger.ViewModels
                 return;
             }
             _isDisposed = true;
+
+            Editor.MaterialPreviewFrameReady -= OnMaterialPreviewReady;
+
             Editor.Dispose();
             MaterialPreview.Dispose();
             GC.SuppressFinalize(this);

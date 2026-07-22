@@ -7,16 +7,21 @@ namespace SmartExchanger.ViewModels.Nodes
     public enum NodeType
     {
         ColorNode,
+        ValueNode,
+        TextureSizeNode,
+
+
         PerlinNoiseNode,
         PerlinTurbulenceNode,
-        OutputNode,
         BlendNode,
-        TextureSizeNode,
         RerouteNode,
         ThresholdNode,
         InvertNode,
         WorleyNoiseNode,
-        ValueNode,
-        HeightToNormalNode
+        HeightToNormalNode,
+
+
+        MaterialOutputNode,
+        OutputNode
     }
 }

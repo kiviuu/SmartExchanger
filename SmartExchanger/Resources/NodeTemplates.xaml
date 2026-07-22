@@ -84,7 +84,7 @@
             <StackPanel Width="180" Margin="8">
                 <Grid Margin="0,2">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="35"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Value" FontWeight="Bold" VerticalAlignment="Center"/>
@@ -503,7 +503,6 @@
             </StackPanel>
         </nodify:Node>
     </DataTemplate>
-
     <DataTemplate DataType="{x:Type nodes:HeightToNormalNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
                  Input="{Binding Inputs}" 
@@ -609,6 +608,52 @@
                         </TextBlock.Style>
                     </TextBlock>
                 </Grid>
+            </Border>
+        </nodify:Node>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:MaterialOutputNodeViewModel}">
+        <nodify:Node Header="{Binding Title}"
+                 Input="{Binding Inputs}"
+                 Output="{Binding Outputs}"
+                 Tag="{Binding DataContext,
+                               RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete"
+                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
+                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                          CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}"
+                                  Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                  IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <Border Width="190"
+                Margin="8"
+                Padding="10"
+                Background="#252525"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                CornerRadius="4">
+
+                <StackPanel>
+                    <TextBlock Text="Material preview target"
+                           Foreground="#CCCCCC"
+                           HorizontalAlignment="Center"/>
+
+                    <TextBlock Margin="0,5,0,0"
+                           Text="Connect material maps"
+                           FontSize="10"
+                           Foreground="#777777"
+                           HorizontalAlignment="Center"/>
+                </StackPanel>
             </Border>
         </nodify:Node>
     </DataTemplate>

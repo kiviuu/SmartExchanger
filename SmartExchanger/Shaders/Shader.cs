@@ -9,7 +9,8 @@ namespace SmartExchanger.Shaders
         Threshold,
         Invert,
         WorleyNoise,
-        HeightToNormal
+        HeightToNormal,
+        PackRoughnessMetallic,
     }
 
 
@@ -23,6 +24,7 @@ namespace SmartExchanger.Shaders
                 Shader.Invert => "Invert",
                 Shader.WorleyNoise => "WorleyNoise",
                 Shader.HeightToNormal => "HeightToNormal",
+                Shader.PackRoughnessMetallic => "PackRoughnessMetallic",
                 _ => shader.ToString()
             };
         }
