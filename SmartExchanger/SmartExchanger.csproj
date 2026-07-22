@@ -43,5 +43,10 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
   </ItemGroup>
+  <ItemGroup>
+	  <None Update="Assets\EnvironmentMaps\Cubemap_Grandcanyon.dds">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+  </ItemGroup>
 
 </Project>

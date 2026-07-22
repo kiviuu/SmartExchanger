@@ -9,6 +9,7 @@ using System.Windows.Media.Media3D;
 using System.Numerics;
 using SmartExchanger.Models;
 using System.IO;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace SmartExchanger.ViewModels
 {
@@ -19,10 +20,15 @@ namespace SmartExchanger.ViewModels
         public PerspectiveCamera Camera { get; }
         public MeshGeometry3D SphereGeometry { get; }
         public PBRMaterial SphereMaterial { get; }
+        public TextureModel? EnvironmentTexture { get; private set; }
+        private string _ddsEnvironmentMapName = "Cubemap_Grandcanyon.dds";
 
         public MaterialPreviewViewModel()
         {
             this.EffectsManager = new DefaultEffectsManager();
+
+            this.EnvironmentTexture = LoadEnvironmentTexture(this._ddsEnvironmentMapName);
+
             this.Camera = new PerspectiveCamera
             {
                 Position = new Point3D(0, 0, 5),
@@ -46,7 +52,7 @@ namespace SmartExchanger.ViewModels
                 RenderNormalMap = false,
                 RenderRoughnessMetallicMap = false,
 
-                RenderEnvironmentMap = false,
+                RenderEnvironmentMap = true,
                 EnableAutoTangent = true
             };
         }
@@ -100,6 +106,16 @@ namespace SmartExchanger.ViewModels
             return new TextureModel(stream, autoCloseStream: true);
         }
 
+        private static TextureModel LoadEnvironmentTexture(string fileName)
+        {
+            string texturePath = Path.Combine(AppContext.BaseDirectory, "Assets", "EnvironmentMaps", fileName);
+            if (!File.Exists(texturePath))
+            {
+                throw new FileNotFoundException($"Environment cubemap not found, \n Chech whether the DDS file exists and the path is correct.", texturePath);
+            }
+            return TextureModel.Create(texturePath) ?? throw new InvalidOperationException("HelixToolkit could not create the environment TextureModel.");
+        }
+
         public void Dispose()
         {
             if (_isDisposed)
@@ -115,6 +131,9 @@ namespace SmartExchanger.ViewModels
             SphereMaterial.RenderAlbedoMap = false;
             SphereMaterial.RenderNormalMap = false;
             SphereMaterial.RenderRoughnessMetallicMap = false;
+
+            SphereMaterial.RenderEnvironmentMap = false;
+            EnvironmentTexture = null;
 
             if (EffectsManager is IDisposable disposable)
             {
