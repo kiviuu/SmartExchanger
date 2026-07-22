@@ -2,14 +2,15 @@
 using HelixToolkit.Geometry;
 using HelixToolkit.SharpDX;
 using HelixToolkit.Wpf.SharpDX;
+using SmartExchanger.Models;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Numerics;
+using System.Windows.Media.Media3D;
+using Material = HelixToolkit.Wpf.SharpDX.Material;
 using MeshGeometry3D = HelixToolkit.SharpDX.MeshGeometry3D;
 using PerspectiveCamera = HelixToolkit.Wpf.SharpDX.PerspectiveCamera;
-using Material = HelixToolkit.Wpf.SharpDX.Material;
-using System.Windows.Media.Media3D;
-using System.Numerics;
-using SmartExchanger.Models;
-using System.IO;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace SmartExchanger.ViewModels
 {
@@ -20,14 +21,17 @@ namespace SmartExchanger.ViewModels
         public PerspectiveCamera Camera { get; }
         public MeshGeometry3D SphereGeometry { get; }
         public PBRMaterial SphereMaterial { get; }
-        public TextureModel? EnvironmentTexture { get; private set; }
-        private string _ddsEnvironmentMapName = "Cubemap_Grandcanyon.dds";
 
+        [ObservableProperty]
+        private TextureModel? _environmentTexture;
+
+        //private string _ddsEnvironmentMapName = "Cubemap_Grandcanyon.dds";
+        public ObservableCollection<EnvironmentMapItem> AvailableEnvironmentMaps { get; } = new();
+        [ObservableProperty]
+        private EnvironmentMapItem? _selectedEnvironmentMap;
         public MaterialPreviewViewModel()
         {
             this.EffectsManager = new DefaultEffectsManager();
-
-            this.EnvironmentTexture = LoadEnvironmentTexture(this._ddsEnvironmentMapName);
 
             this.Camera = new PerspectiveCamera
             {
@@ -55,6 +59,9 @@ namespace SmartExchanger.ViewModels
                 RenderEnvironmentMap = true,
                 EnableAutoTangent = true
             };
+
+            DiscoverEnvironmentMaps();
+            SelectedEnvironmentMap = AvailableEnvironmentMaps.FirstOrDefault();
         }
 
         public void ApplyPreview(MaterialPreviewFrame frame)
@@ -106,16 +113,68 @@ namespace SmartExchanger.ViewModels
             return new TextureModel(stream, autoCloseStream: true);
         }
 
-        private static TextureModel LoadEnvironmentTexture(string fileName)
+
+        private void DiscoverEnvironmentMaps()
         {
-            string texturePath = Path.Combine(AppContext.BaseDirectory, "Assets", "EnvironmentMaps", fileName);
-            if (!File.Exists(texturePath))
+            AvailableEnvironmentMaps.Clear();
+            string directoryPath = Path.Combine(AppContext.BaseDirectory, "Assets", "EnvironmentMaps");
+            if (!Directory.Exists(directoryPath))
             {
-                throw new FileNotFoundException($"Environment cubemap not found, \n Chech whether the DDS file exists and the path is correct.", texturePath);
+                Debug.WriteLine($"[Environment Maps] Directory doeas not exists: {directoryPath}");
+                return;
             }
-            return TextureModel.Create(texturePath) ?? throw new InvalidOperationException("HelixToolkit could not create the environment TextureModel.");
+
+            IEnumerable<string> mapFiles = Directory.EnumerateFiles(directoryPath, "*.dds", SearchOption.TopDirectoryOnly)
+                .OrderBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase);
+
+            foreach(string mapFilePath in mapFiles)
+            {
+                string displayName = CreateEnvironmentMapDisplayName(mapFilePath);
+                AvailableEnvironmentMaps.Add(new EnvironmentMapItem(displayName, mapFilePath));
+            }
+        }
+        private static string CreateEnvironmentMapDisplayName(string filePath)
+        {
+            string name = Path.GetFileNameWithoutExtension(filePath);
+            name = name.Replace('_', ' ').Replace('-', ' ');
+            const string cubemapPrefix = "Cubemap";
+            if (name.StartsWith(cubemapPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                name = name[cubemapPrefix.Length..];
+            }
+            return name.Trim();
         }
 
+        partial void OnSelectedEnvironmentMapChanged(EnvironmentMapItem? value)
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+            if (value is null)
+            {
+                EnvironmentTexture = null;
+                SphereMaterial.RenderEnvironmentMap = false;
+                return;
+            }
+            try
+            {
+                if (!File.Exists(value.FilePath))
+                {
+                    throw new FileNotFoundException("Selected environment map does not exist.", value.FilePath);
+                }
+                TextureModel nextTexture = TextureModel.Create(value.FilePath) ?? throw new InvalidOperationException("HelixToolkit could not create the environment TextureModel.");
+                EnvironmentTexture = nextTexture;
+                SphereMaterial.RenderEnvironmentMap = true;
+                
+            }
+            catch(Exception ex)
+            {
+                EnvironmentTexture = null;
+                SphereMaterial.RenderEnvironmentMap = false;
+                Debug.WriteLine($"[Environment Maps] Could not load '{value.DisplayName}'. {ex}");
+            }
+        }
         public void Dispose()
         {
             if (_isDisposed)
@@ -134,6 +193,8 @@ namespace SmartExchanger.ViewModels
 
             SphereMaterial.RenderEnvironmentMap = false;
             EnvironmentTexture = null;
+
+            AvailableEnvironmentMaps.Clear();
 
             if (EffectsManager is IDisposable disposable)
             {

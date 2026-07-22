@@ -44,7 +44,7 @@
 	  </Content>
   </ItemGroup>
   <ItemGroup>
-	  <None Update="Assets\EnvironmentMaps\Cubemap_Grandcanyon.dds">
+	  <None Update="Assets\EnvironmentMaps\**\*.dds">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
   </ItemGroup>
