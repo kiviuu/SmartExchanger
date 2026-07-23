@@ -1,0 +1,17 @@
+// kind=shader
+uniform shader baseColorImage;
+uniform shader opacityImage;
+
+half getScalarValue(half3 color){
+    return dot(color, half3(0.2126, 0.7152, 0.0722) );
+}
+
+half4 main(float2 position){
+    half4 colorBaseColor = baseColorImage.eval(position);
+    half opacity = clamp(
+        getScalarValue(opacityImage.eval(position).rgb), 0.0, 1.0
+    );
+    half finalAlpha = colorBaseColor.a * opacity;
+
+    return half4(colorBaseColor.rgb * finalAlpha, finalAlpha);
+}

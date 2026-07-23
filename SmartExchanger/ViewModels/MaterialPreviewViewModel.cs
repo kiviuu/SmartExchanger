@@ -25,6 +25,9 @@ namespace SmartExchanger.ViewModels
         [ObservableProperty]
         private TextureModel? _environmentTexture;
 
+        [ObservableProperty]
+        private bool _isSphereTransparent;
+
         //private string _ddsEnvironmentMapName = "Cubemap_Grandcanyon.dds";
         public ObservableCollection<EnvironmentMapItem> AvailableEnvironmentMaps { get; } = new();
         [ObservableProperty]
@@ -62,6 +65,8 @@ namespace SmartExchanger.ViewModels
 
             DiscoverEnvironmentMaps();
             SelectedEnvironmentMap = AvailableEnvironmentMaps.FirstOrDefault();
+
+            IsSphereTransparent = false;
         }
 
         public void ApplyPreview(MaterialPreviewFrame frame)
@@ -78,9 +83,11 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
+
             TextureModel? albedoMap = CreateTexture(frame.BaseColorPng);
             SphereMaterial.AlbedoMap = albedoMap;
             SphereMaterial.RenderAlbedoMap = albedoMap is not null;
+            IsSphereTransparent = frame.IsTransparent;
 
             TextureModel? normalMap = CreateTexture(frame.NormalPng);
             SphereMaterial.NormalMap = normalMap;
@@ -193,6 +200,8 @@ namespace SmartExchanger.ViewModels
 
             SphereMaterial.RenderEnvironmentMap = false;
             EnvironmentTexture = null;
+
+            IsSphereTransparent = false;
 
             AvailableEnvironmentMaps.Clear();
 

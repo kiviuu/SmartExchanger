@@ -11,6 +11,7 @@ namespace SmartExchanger.Shaders
         WorleyNoise,
         HeightToNormal,
         PackRoughnessMetallic,
+        PackBaseColorOpacity
     }
 
 
@@ -25,6 +26,7 @@ namespace SmartExchanger.Shaders
                 Shader.WorleyNoise => "WorleyNoise",
                 Shader.HeightToNormal => "HeightToNormal",
                 Shader.PackRoughnessMetallic => "PackRoughnessMetallic",
+                Shader.PackBaseColorOpacity => "PackBaseColorOpacity",
                 _ => shader.ToString()
             };
         }

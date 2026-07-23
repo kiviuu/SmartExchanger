@@ -1132,10 +1132,13 @@ namespace SmartExchanger.ViewModels
 
             using SKImage? baseColorImage = BuildImageForInput(materialOutput, materialOutput.BaseColorConnector, context, _materialPreviewTextureSize);
 
+            using SKImage? opacityImage = BuildImageForInput(materialOutput, materialOutput.OpacityConnector, context, _materialPreviewTextureSize);
+
             using SKImage? normalImage = BuildImageForInput(materialOutput, materialOutput.NormalConnector, context, _materialPreviewTextureSize);
 
-            byte[]? baseColorPng = baseColorImage is null ? null :
-                EncodeMaterialPreviewTexture(context, baseColorImage, _materialPreviewTextureSize);
+            //byte[]? baseColorPng = baseColorImage is null ? null :
+            //    EncodeMaterialPreviewTexture(context, baseColorImage, _materialPreviewTextureSize);
+            bool isTransparent = opacityImage is not null;
             byte[]? normalPng = normalImage is null ? null :
                 EncodeMaterialPreviewTexture(context, normalImage, _materialPreviewTextureSize);
 
@@ -1143,12 +1146,13 @@ namespace SmartExchanger.ViewModels
 
             using SKImage? metallicImage = BuildImageForInput(materialOutput, materialOutput.MetallicConnector, context, _materialPreviewTextureSize);
             SKImage? roughnessMetallicImage = null;
+            SKImage? baseColorOpacityImage = null;
             try
             {
                 if (roughnessImage is not null ||
                     metallicImage is not null)
                 {
-                    roughnessMetallicImage =BuildRoughnessMetallicImage(context, _materialPreviewTextureSize, roughnessImage, metallicImage);
+                    roughnessMetallicImage = BuildRoughnessMetallicImage(context, _materialPreviewTextureSize, roughnessImage, metallicImage);
                 }
 
                 byte[]? roughnessMetallicPng =
@@ -1156,16 +1160,21 @@ namespace SmartExchanger.ViewModels
                         ? null
                         : EncodeMaterialPreviewTexture(context, roughnessMetallicImage, _materialPreviewTextureSize);
 
+                baseColorOpacityImage = BuildBaseColorOpacityImage(context, _materialPreviewTextureSize, baseColorImage, opacityImage);
+                byte[]? baseColorOpacityPng = baseColorOpacityImage is null ? null :
+                    EncodeMaterialPreviewTexture(context, baseColorOpacityImage, _materialPreviewTextureSize);
                 PublishMaterialPreview(
                     new MaterialPreviewFrame(
-                        BaseColorPng: baseColorPng,
+                        BaseColorPng: baseColorOpacityPng,
                         NormalPng: normalPng,
-                        RoughnessMetallicPng:roughnessMetallicPng
+                        RoughnessMetallicPng:roughnessMetallicPng,
+                        IsTransparent: isTransparent
                         ));
             }
             finally
             {
                 roughnessMetallicImage?.Dispose();
+                baseColorOpacityImage?.Dispose();
             }
         }
 
@@ -1216,6 +1225,34 @@ namespace SmartExchanger.ViewModels
                 BlendMode = SKBlendMode.Src
             };
             var destination = new SKRect(0, 0, size, size);
+            surface.Canvas.Clear(SKColors.Transparent);
+            surface.Canvas.DrawRect(destination, paint);
+            return surface.Snapshot();
+        }
+        private SKImage BuildBaseColorOpacityImage(GRContext context, int size, SKImage? baseColorImage, SKImage? opacityImage)
+        {
+            var info = new SKImageInfo(size, size, SKColorType.Rgba8888, SKAlphaType.Premul);
+
+            SKRuntimeEffect effect = shaderService.GetCompiledShader(Shaders.Shader.PackBaseColorOpacity);
+
+            using SKShader baseColorShader = baseColorImage is null ? SKShader.CreateColor(SKColors.White) :
+                baseColorImage.ToShader(SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
+            using SKShader opacityShader = opacityImage is null ? SKShader.CreateColor(SKColors.White) :
+                opacityImage.ToShader(SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
+            using var uniforms = new SKRuntimeEffectUniforms(effect);
+            using var children = new SKRuntimeEffectChildren(effect)
+            {
+                ["baseColorImage"] = baseColorShader,
+                ["opacityImage"] = opacityShader
+            };
+            using var packedShader = effect.ToShader(uniforms: uniforms, children:children) ?? throw new InvalidOperationException("Could not create the BaseColor/Opacity shader");
+            using var paint = new SKPaint
+            {
+                Shader = packedShader,
+                BlendMode = SKBlendMode.Src
+            };
+            var destination = new SKRect(0,0,size,size);
+            using var surface = SKSurface.Create(context, true, info) ?? throw new InvalidOperationException("Could not create the Roughness/Metallic GPU surface");
             surface.Canvas.Clear(SKColors.Transparent);
             surface.Canvas.DrawRect(destination, paint);
             return surface.Snapshot();
