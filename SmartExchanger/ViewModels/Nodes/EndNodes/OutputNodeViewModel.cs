@@ -45,7 +45,7 @@ namespace SmartExchanger.ViewModels.Nodes
                 PreviewImage.PixelWidth != width ||
                 PreviewImage.PixelHeight != height)
             {
-                PreviewImage = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+                PreviewImage = new WriteableBitmap(width, height, 96, 96, PixelFormats.Pbgra32, null);
             }
 
             int bufferSize = checked(bitmap.RowBytes * bitmap.Height);

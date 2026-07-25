@@ -831,4 +831,53 @@
             </Border>
         </nodify:Node>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:TexturePreviewNodeViewModel}">
+        <nodify:Node Header="{Binding Title}"
+                 Input="{Binding Inputs}"
+                 Output="{Binding Outputs}"
+                 Tag="{Binding DataContext,
+                               RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete"
+                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
+                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                          CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}"
+                                  Anchor="{Binding Anchor,
+                                                   Mode=OneWayToSource}"
+                                  IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <Border Width="190"
+                Margin="8"
+                Padding="10"
+                Background="#252525"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                CornerRadius="4">
+
+                <StackPanel>
+                    <TextBlock Text="2D preview target"
+                           Foreground="#CCCCCC"
+                           HorizontalAlignment="Center"/>
+
+                    <TextBlock Margin="0,5,0,0"
+                           Text="Shown in the Texture Preview tab"
+                           Foreground="#777777"
+                           FontSize="10"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </nodify:Node>
+    </DataTemplate>
 </ResourceDictionary>

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Win32;
 using SkiaSharp;
+using SkiaSharp.Views.WPF;
 using SmartExchanger.Models;
 using SmartExchanger.Services;
 using System.Collections.ObjectModel;
@@ -10,6 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Packaging;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -47,6 +49,9 @@ namespace SmartExchanger.ViewModels
 
         private const int _materialPreviewTextureSize = 512;
         public event Action<MaterialPreviewFrame>? MaterialPreviewFrameReady;
+
+        private const int _texturePreviewSize = 512;
+        public event Action<TexturePreviewFrame>? TexturePreviewFrameReady;
 
 
         // One persistnet SKGElement is the owner of this GRContext
@@ -321,6 +326,7 @@ namespace SmartExchanger.ViewModels
                         RenderOutputPreview(output, context, textureSize);
                     }
 
+                    RenderTexturePreview(context);
                     RenderMaterialPreview(context);
                     _renderedGraphRevision = _graphRevision;
                 }
@@ -635,7 +641,7 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
-            // only one TextureSize node and only one MaterialOutputNode
+            // Nodes that may exist only once in the graph
             if (nodeType == NodeType.TextureSizeNode &&
                 Nodes.OfType<TextureSizeNodeViewModel>().Any())
             {
@@ -643,6 +649,10 @@ namespace SmartExchanger.ViewModels
             }
             if (nodeType == NodeType.MaterialOutputNode &&
                 Nodes.OfType<MaterialOutputNodeViewModel>().Any())
+            {
+                return;
+            }
+            if (nodeType == NodeType.TexturePreviewNode && Nodes.OfType<TexturePreviewNodeViewModel>().Any())
             {
                 return;
             }
@@ -666,6 +676,7 @@ namespace SmartExchanger.ViewModels
                 NodeType.MaterialOutputNode => new MaterialOutputNodeViewModel(),
                 NodeType.TextureInputNode => new TextureInputNodeViewModel(),
                 NodeType.Translate2DNode => new Translate2DNodeViewModel(),
+                NodeType.TexturePreviewNode => new TexturePreviewNodeViewModel(),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(nodeType), nodeType, "Unknown node type")
             };
@@ -1269,6 +1280,52 @@ namespace SmartExchanger.ViewModels
             surface.Canvas.Clear(SKColors.Transparent);
             surface.Canvas.DrawRect(destination, paint);
             return surface.Snapshot();
+        }
+
+
+        // Texture preview view
+        private void RenderTexturePreview(GRContext context)
+        {
+            TexturePreviewNodeViewModel? previewNode = Nodes.OfType<TexturePreviewNodeViewModel>().FirstOrDefault();
+            if (previewNode is null)
+            {
+                PublishTexturePreview(TexturePreviewFrame.Empty);
+                return;
+            }
+
+            using SKImage? image = BuildImageForInput(
+                    previewNode, previewNode.InputConnector, context, _texturePreviewSize
+                );
+
+            if (image is null)
+            {
+                PublishTexturePreview(TexturePreviewFrame.Empty);
+                return;
+            }
+            using SKBitmap bitmap = CreatePreviewBitmap(context, image, _texturePreviewSize, _texturePreviewSize);
+            int rowBytes = bitmap.RowBytes;
+            int bufferSize = checked(rowBytes * bitmap.Height);
+            byte[] pixels = new byte[bufferSize];
+
+            Marshal.Copy(bitmap.GetPixels(), pixels, startIndex: 0, length: bufferSize);
+            PublishTexturePreview(new TexturePreviewFrame(
+                    Pixels: pixels,
+                    Width: bitmap.Width,
+                    Height : bitmap.Height,
+                    RowBytes: rowBytes
+                ));
+        }
+
+        private void PublishTexturePreview(TexturePreviewFrame frame)
+        {
+            try
+            {
+                TexturePreviewFrameReady?.Invoke(frame);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Texture Preview] Update failed: {ex}");
+            }
         }
     }
 }

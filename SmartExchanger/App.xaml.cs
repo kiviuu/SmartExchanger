@@ -31,6 +31,7 @@ namespace SmartExchanger
                     services.AddTransient<EditorViewModel>();
                     services.AddTransient<MainViewModel>();
                     services.AddTransient<MaterialPreviewViewModel>();
+                    services.AddTransient<TexturePreviewViewModel>();
 
                     //services
                     services.AddSingleton<IShaderService, ShaderService>();

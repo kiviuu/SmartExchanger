@@ -120,6 +120,9 @@
                                 <MenuItem Header="Material Output"
                                           Command="{Binding CreateNodeCommand}"
                                           CommandParameter="{x:Static nodes:NodeType.MaterialOutputNode}" />
+                                <MenuItem Header="Texture Preview"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.TexturePreviewNode}" />
                             </MenuItem>
                         </MenuItem>
                         <Separator />
@@ -137,7 +140,16 @@
                       ResizeDirection="Columns"
                       ResizeBehavior="PreviousAndNext"/>
 
-        <views:MaterialPreviewView Grid.Column="2"
-                                   DataContext="{Binding MaterialPreview}" />
+        <TabControl Grid.Column="2"
+                    Background="#202020"
+                    BorderThickness="1,0,0,0"
+                    BorderBrush="#383838">
+            <TabItem Header="Texture Preview">
+                <views:TexturePreviewView DataContext="{Binding TexturePreview}" />
+            </TabItem>
+            <TabItem Header="Material Preview">
+                <views:MaterialPreviewView DataContext="{Binding MaterialPreview}" />
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

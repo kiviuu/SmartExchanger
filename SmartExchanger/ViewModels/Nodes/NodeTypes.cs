@@ -21,6 +21,7 @@ namespace SmartExchanger.ViewModels.Nodes
 
 
         MaterialOutputNode,
-        OutputNode
+        OutputNode,
+        TexturePreviewNode
     }
 }

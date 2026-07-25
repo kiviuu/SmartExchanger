@@ -1,12 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Windows;
-using Windows.Media.Audio;
 using Microsoft.Win32;
 
 namespace SmartExchanger.ViewModels.Nodes
