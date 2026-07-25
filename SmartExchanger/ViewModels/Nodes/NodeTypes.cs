@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace SmartExchanger.ViewModels.Nodes
 {
     public enum NodeType
@@ -9,6 +6,7 @@ namespace SmartExchanger.ViewModels.Nodes
         ColorNode,
         ValueNode,
         TextureSizeNode,
+        TextureInputNode,
 
 
         PerlinNoiseNode,
@@ -19,6 +17,7 @@ namespace SmartExchanger.ViewModels.Nodes
         InvertNode,
         WorleyNoiseNode,
         HeightToNormalNode,
+        Translate2DNode,
 
 
         MaterialOutputNode,

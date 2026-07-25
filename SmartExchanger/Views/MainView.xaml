@@ -78,6 +78,9 @@
                                 <MenuItem Header="Value"
                                           Command="{Binding CreateNodeCommand}"
                                           CommandParameter="{x:Static nodes:NodeType.ValueNode}" />
+                                <MenuItem Header="Texture Input"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.TextureInputNode}" />
                             </MenuItem>
 
                             <MenuItem Header="Middle Nodes">
@@ -105,6 +108,9 @@
                                 <MenuItem Header="Height To Normal"
                                           Command="{Binding CreateNodeCommand}"
                                           CommandParameter="{x:Static nodes:NodeType.HeightToNormalNode}" />
+                                <MenuItem Header="Translate 2D"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.Translate2DNode}"/>
                             </MenuItem>
 
                             <MenuItem Header="End Nodes">

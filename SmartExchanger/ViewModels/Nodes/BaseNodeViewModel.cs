@@ -20,6 +20,17 @@ namespace SmartExchanger.ViewModels.Nodes
         public ObservableCollection<ConnectorViewModel> Outputs { get; } = new();
 
         public event Action? PropsChanged;
+        /// <summary>
+        /// Manually invalidates node output.
+        /// Useful when render content changes without changing
+        /// a regular observable property, for example after loading a file.
+        /// </summary>
+        protected void InvalidateRender()
+        {
+            PropsChanged?.Invoke();
+        }
+
+
 
         /// <summary>
         /// Creates node results in provided GRContext

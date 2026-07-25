@@ -121,9 +121,79 @@
             </StackPanel>
         </nodify:Node>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:TextureInputNodeViewModel}">
+        <nodify:Node Header="{Binding Title}"
+                 Input="{Binding Inputs}"
+                 Output="{Binding Outputs}"
+                 Tag="{Binding DataContext,
+                               RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
 
-    
-    
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete"
+                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
+                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                          CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}"
+                                   Anchor="{Binding Anchor,
+                                                    Mode=OneWayToSource}"
+                                   IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+
+            <StackPanel Width="210"
+                    Margin="8">
+
+                <Border Padding="8"
+                    Margin="0,0,0,8"
+                    Background="#242424"
+                    BorderBrush="#454545"
+                    BorderThickness="1"
+                    CornerRadius="4">
+
+                    <StackPanel>
+                        <TextBlock Text="{Binding FileName}"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding FilePath}"/>
+
+                        <TextBlock Text="{Binding TextureInfo}"
+                               Margin="0,3,0,0"
+                               Foreground="#909090"
+                               FontSize="11"/>
+                    </StackPanel>
+                </Border>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0"
+                        Height="27"
+                        Content="Load..."
+                        Command="{Binding LoadTextureCommand}"/>
+
+                    <Button Grid.Column="2"
+                        Height="27"
+                        Content="Clear"
+                        IsEnabled="{Binding HasTexture}"
+                        Command="{Binding ClearTextureCommand}"/>
+                </Grid>
+            </StackPanel>
+        </nodify:Node>
+    </DataTemplate>
+
+
+
     <!-- Middle Nodes -->
     <DataTemplate DataType="{x:Type nodes:PerlinNoiseFractalNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
@@ -554,6 +624,97 @@
             </StackPanel>
         </nodify:Node>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:Translate2DNodeViewModel}">
+        <nodify:Node Header="{Binding Title}"
+                 Input="{Binding Inputs}"
+                 Output="{Binding Outputs}"
+                 Tag="{Binding DataContext,
+                               RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete"
+                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
+                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                          CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}"
+                                  Anchor="{Binding Anchor,
+                                                   Mode=OneWayToSource}"
+                                  IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}"
+                                   Anchor="{Binding Anchor,
+                                                    Mode=OneWayToSource}"
+                                   IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+
+            <StackPanel Width="210"
+                    Margin="8">
+
+                <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="55"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Offset X"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+
+                    <Slider Grid.Column="1"
+                        Margin="10,0,0,0"
+                        Minimum="-1"
+                        Maximum="1"
+                        Value="{Binding OffsetX,
+                                        Mode=TwoWay,
+                                        Delay=100}"
+                        TickFrequency="0.01"
+                        IsSnapToTickEnabled="True"/>
+                </Grid>
+
+                <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="55"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Offset Y"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+
+                    <Slider Grid.Column="1"
+                        Margin="10,0,0,0"
+                        Minimum="-1"
+                        Maximum="1"
+                        Value="{Binding OffsetY,
+                                        Mode=TwoWay,
+                                        Delay=100}"
+                        TickFrequency="0.01"
+                        IsSnapToTickEnabled="True"/>
+                </Grid>
+
+                <CheckBox Margin="0,7,0,0"
+                      Content="Wrap texture"
+                      IsChecked="{Binding Wrap,
+                                          Mode=TwoWay}"/>
+
+                <TextBlock Margin="0,5,0,0"
+                       Text="1.0 = full texture size"
+                       Foreground="#777"
+                       FontSize="10"/>
+            </StackPanel>
+        </nodify:Node>
+    </DataTemplate>
 
 
 
@@ -584,24 +745,37 @@
             </nodify:Node.InputConnectorTemplate>
 
 
-            <Border Width="140" Height="140" Margin="8" Background="#00000000" CornerRadius="6" BorderBrush="#3F3F46" BorderThickness="2" ClipToBounds="True">
-                <Grid Width="256" Height="256" Background="Black">
-                    <Image Source="{Binding PreviewImage}"
-                           Width="256"
-                           Height="256"
-                           Stretch="UniformToFill"
-                           SnapsToDevicePixels="True" />
+            <Border Width="160"
+                    Height="160"
+                    Margin="8"
+                    Background="#181818"
+                    CornerRadius="6"
+                    BorderBrush="#3F3F46"
+                    BorderThickness="2"
+                    ClipToBounds="True">
 
-                    <TextBlock Text="NO SIGNAL" 
-                                Foreground="Transparent" 
-                                HorizontalAlignment="Center" 
-                                VerticalAlignment="Center">
+                <Grid>
+                    <Image Source="{Binding PreviewImage}"
+                           Stretch="Uniform"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Stretch"
+                           SnapsToDevicePixels="True"/>
+
+                    <TextBlock Text="NO SIGNAL"
+                               Foreground="#808080"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center">
+
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Setter Property="Visibility"
+                                        Value="Collapsed"/>
+
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasSignal}" Value="False">
-                                        <Setter Property="Visibility" Value="Visible" />
+                                    <DataTrigger Binding="{Binding HasSignal}"
+                                                Value="False">
+                                        <Setter Property="Visibility"
+                                                Value="Visible"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

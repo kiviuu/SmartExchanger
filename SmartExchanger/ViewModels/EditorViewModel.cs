@@ -664,6 +664,8 @@ namespace SmartExchanger.ViewModels
                 NodeType.ValueNode => new ValueNodeViewModel(),
                 NodeType.HeightToNormalNode => new HeightToNormalNodeViewModel(shaderService),
                 NodeType.MaterialOutputNode => new MaterialOutputNodeViewModel(),
+                NodeType.TextureInputNode => new TextureInputNodeViewModel(),
+                NodeType.Translate2DNode => new Translate2DNodeViewModel(),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(nodeType), nodeType, "Unknown node type")
             };
@@ -706,6 +708,7 @@ namespace SmartExchanger.ViewModels
             }
 
             DetachNode(node);
+            DisposeNode(node);
             Nodes.Remove(node);
             InvalidateGraph(requestGpuPurge: true);
         }
@@ -857,6 +860,7 @@ namespace SmartExchanger.ViewModels
             foreach (var node in Nodes.ToList())
             {
                 DetachNode(node);
+                DisposeNode(node);
             }
 
             Connections.Clear();
@@ -909,6 +913,7 @@ namespace SmartExchanger.ViewModels
             foreach(var node in Nodes.ToList())
             {
                 DetachNode(node);
+                DisposeNode(node);
             }
             Connections.Clear();
             SelectedConnections.Clear();
@@ -925,6 +930,14 @@ namespace SmartExchanger.ViewModels
                 node.SelectedSize = node.AvailableSizes[0];
             }
             return node;
+        }
+
+        private static void DisposeNode(BaseNodeViewModel node)
+        {
+            if (node is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
 
         // Export texture
