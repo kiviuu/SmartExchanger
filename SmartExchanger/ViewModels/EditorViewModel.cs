@@ -15,6 +15,8 @@ using System.Runtime.InteropServices;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Microsoft.Extensions.Options;
+using SmartExchanger.Options;
 
 namespace SmartExchanger.ViewModels
 {
@@ -29,12 +31,13 @@ namespace SmartExchanger.ViewModels
     {
         private readonly IShaderService shaderService;
 
-        private const int PreviewWidth = 256;
-        private const int PreviewHeight = 256;
+        private readonly RenderingOptions _renderingOptions;
+        private readonly ExportOptions _exportOptions;
 
-        // GPU resource caching params
-        private const long MinimumGpuCacheBytes = 16L * 1024L * 1024L;
-        private const long MaximumGpuCacheBytes = 96L * 1024L * 1024L;
+        // GPU resource caching 
+        private readonly long _minimumGpuCacheBytes;
+        private readonly long _maximumGpuCacheBytes;
+
 
         public ObservableCollection<BaseNodeViewModel> Nodes { get; } = new();
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new();
@@ -47,10 +50,8 @@ namespace SmartExchanger.ViewModels
 
         private readonly Queue<PendingExportRequest> _pendingExports = new();
 
-        private const int _materialPreviewTextureSize = 512;
-        public event Action<MaterialPreviewFrame>? MaterialPreviewFrameReady;
 
-        private const int _texturePreviewSize = 512;
+        public event Action<MaterialPreviewFrame>? MaterialPreviewFrameReady;
         public event Action<TexturePreviewFrame>? TexturePreviewFrameReady;
 
 
@@ -66,9 +67,18 @@ namespace SmartExchanger.ViewModels
         private bool _isRendering;
         private bool _isDisposed;
 
-        public EditorViewModel(IShaderService shaderService)
+        public EditorViewModel(IShaderService shaderService, IOptions<RenderingOptions> renderingOptions,
+            IOptions<ExportOptions> exportOptions)
         {
             this.shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
+            ArgumentNullException.ThrowIfNull(renderingOptions);
+            ArgumentNullException.ThrowIfNull(exportOptions);
+            this._renderingOptions = renderingOptions.Value;
+            this._exportOptions = exportOptions.Value;
+
+            this._minimumGpuCacheBytes = checked((long)_renderingOptions.MinimumGpuCacheMb * 1024L * 1024L);
+            this._maximumGpuCacheBytes = checked((long)_renderingOptions.MaximumGpuCacheMb * 1024L * 1024L);
+
             SetupDefaultScene();
             UpdateConnectorStates();
         }
@@ -107,10 +117,7 @@ namespace SmartExchanger.ViewModels
 
         private void SetupDefaultScene()
         {
-            AddNodeInternal(new TextureSizeNodeViewModel
-            {
-                Location = new Point(0, 0)
-            });
+            AddNodeInternal(CreateDefaultTextureSizeNode());
         }
 
         private void AddNodeInternal(BaseNodeViewModel node)
@@ -367,8 +374,8 @@ namespace SmartExchanger.ViewModels
                 using var previewBitmap = CreatePreviewBitmap(
                     context,
                     finalImage,
-                    PreviewWidth,
-                    PreviewHeight);
+                    _renderingOptions.OutputPreviewSize,
+                    _renderingOptions.OutputPreviewSize);
 
                 output.UpdatePreview(previewBitmap);
             }
@@ -410,8 +417,9 @@ namespace SmartExchanger.ViewModels
 
         private int GetTextureSize()
         {
-            return Nodes.OfType<TextureSizeNodeViewModel>()
-                       .FirstOrDefault()?.SelectedSize ?? 512;
+            return Nodes.OfType<TextureSizeNodeViewModel>().FirstOrDefault()?
+                    .SelectedSize ??
+                    _renderingOptions.DefaultTextureSize;
         }
 
         /// <summary>
@@ -419,11 +427,11 @@ namespace SmartExchanger.ViewModels
         /// </summary>
         private void ConfigureGpuResourceCache(GRContext context, int textureSize)
         {
-            long oneTextureBytes = checked((long)textureSize * textureSize * 4L);
+            long oneTextureBytes = checked((long)textureSize * textureSize * 8L);
             long desiredLimit = Math.Clamp(
                 oneTextureBytes,
-                MinimumGpuCacheBytes,
-                MaximumGpuCacheBytes);
+                _minimumGpuCacheBytes,
+                _maximumGpuCacheBytes);
 
             if (_configuredGpuCacheLimitBytes == desiredLimit)
             {
@@ -665,7 +673,7 @@ namespace SmartExchanger.ViewModels
                 NodeType.PerlinNoiseNode => new PerlinNoiseFractalNodeViewModel(),
                 NodeType.OutputNode => new OutputNodeViewModel(),
                 NodeType.BlendNode => new BlendNodeViewModel(),
-                NodeType.TextureSizeNode => new TextureSizeNodeViewModel(),
+                NodeType.TextureSizeNode => CreateDefaultTextureSizeNode(),
                 NodeType.PerlinTurbulenceNode => new PerlinNoiseTurbulenceNodeViewModel(),
                 NodeType.RerouteNode => new RerouteNodeViewModel(),
                 NodeType.ThresholdNode => new ThresholdNodeViewModel(shaderService),
@@ -938,7 +946,8 @@ namespace SmartExchanger.ViewModels
             var node = new TextureSizeNodeViewModel { Location = new Point(0, 0) };
             if (node.AvailableSizes.Count > 0)
             {
-                node.SelectedSize = node.AvailableSizes[0];
+                node.SelectedSize = node.AvailableSizes.Contains(_renderingOptions.DefaultTextureSize) ? _renderingOptions.DefaultTextureSize :
+                    node.AvailableSizes[0];
             }
             return node;
         }
@@ -1046,7 +1055,7 @@ namespace SmartExchanger.ViewModels
                 throw new InvalidOperationException("Output Node did not generate any texture.");
             }
             using var cpuBitmap = CreateExportBitmap(context, outputImage, request.Format != TextureExportFormat.Jpeg);
-            SaveBitmap(cpuBitmap, request.FilePath,  request.Format);
+            SaveBitmap(cpuBitmap, request.FilePath,  request.Format, _exportOptions.JpegQuality);
         }
         private static SKBitmap CreateExportBitmap(GRContext context, SKImage src, bool preserveTransparency)
         {
@@ -1067,7 +1076,7 @@ namespace SmartExchanger.ViewModels
             }
             return bitmap;
         }
-        private static void SaveBitmap(SKBitmap bitmap, string filePath, TextureExportFormat format)
+        private static void SaveBitmap(SKBitmap bitmap, string filePath, TextureExportFormat format, int jpegQuality)
         {
             int buffSize = checked(bitmap.RowBytes * bitmap.Height);
             BitmapSource bitmapSrc = BitmapSource.Create(
@@ -1094,7 +1103,7 @@ namespace SmartExchanger.ViewModels
 
                         encoder = new JpegBitmapEncoder
                         {
-                            QualityLevel = 95
+                            QualityLevel = jpegQuality
                         };
 
                         break;
@@ -1154,21 +1163,21 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
-            using SKImage? baseColorImage = BuildImageForInput(materialOutput, materialOutput.BaseColorConnector, context, _materialPreviewTextureSize);
+            using SKImage? baseColorImage = BuildImageForInput(materialOutput, materialOutput.BaseColorConnector, context, _renderingOptions.MaterialPreviewSize);
 
-            using SKImage? opacityImage = BuildImageForInput(materialOutput, materialOutput.OpacityConnector, context, _materialPreviewTextureSize);
+            using SKImage? opacityImage = BuildImageForInput(materialOutput, materialOutput.OpacityConnector, context, _renderingOptions.MaterialPreviewSize);
 
-            using SKImage? normalImage = BuildImageForInput(materialOutput, materialOutput.NormalConnector, context, _materialPreviewTextureSize);
+            using SKImage? normalImage = BuildImageForInput(materialOutput, materialOutput.NormalConnector, context, _renderingOptions.MaterialPreviewSize);
 
             //byte[]? baseColorPng = baseColorImage is null ? null :
             //    EncodeMaterialPreviewTexture(context, baseColorImage, _materialPreviewTextureSize);
             bool isTransparent = opacityImage is not null;
             byte[]? normalPng = normalImage is null ? null :
-                EncodeMaterialPreviewTexture(context, normalImage, _materialPreviewTextureSize);
+                EncodeMaterialPreviewTexture(context, normalImage, _renderingOptions.MaterialPreviewSize);
 
-            using SKImage? roughnessImage = BuildImageForInput(materialOutput, materialOutput.RoughnessConnector, context, _materialPreviewTextureSize);
+            using SKImage? roughnessImage = BuildImageForInput(materialOutput, materialOutput.RoughnessConnector, context, _renderingOptions.MaterialPreviewSize);
 
-            using SKImage? metallicImage = BuildImageForInput(materialOutput, materialOutput.MetallicConnector, context, _materialPreviewTextureSize);
+            using SKImage? metallicImage = BuildImageForInput(materialOutput, materialOutput.MetallicConnector, context, _renderingOptions.MaterialPreviewSize);
             SKImage? roughnessMetallicImage = null;
             SKImage? baseColorOpacityImage = null;
             try
@@ -1176,17 +1185,17 @@ namespace SmartExchanger.ViewModels
                 if (roughnessImage is not null ||
                     metallicImage is not null)
                 {
-                    roughnessMetallicImage = BuildRoughnessMetallicImage(context, _materialPreviewTextureSize, roughnessImage, metallicImage);
+                    roughnessMetallicImage = BuildRoughnessMetallicImage(context, _renderingOptions.MaterialPreviewSize, roughnessImage, metallicImage);
                 }
 
                 byte[]? roughnessMetallicPng =
                     roughnessMetallicImage is null
                         ? null
-                        : EncodeMaterialPreviewTexture(context, roughnessMetallicImage, _materialPreviewTextureSize);
+                        : EncodeMaterialPreviewTexture(context, roughnessMetallicImage, _renderingOptions.MaterialPreviewSize);
 
-                baseColorOpacityImage = BuildBaseColorOpacityImage(context, _materialPreviewTextureSize, baseColorImage, opacityImage);
+                baseColorOpacityImage = BuildBaseColorOpacityImage(context, _renderingOptions.MaterialPreviewSize, baseColorImage, opacityImage);
                 byte[]? baseColorOpacityPng = baseColorOpacityImage is null ? null :
-                    EncodeMaterialPreviewTexture(context, baseColorOpacityImage, _materialPreviewTextureSize);
+                    EncodeMaterialPreviewTexture(context, baseColorOpacityImage, _renderingOptions.MaterialPreviewSize);
                 PublishMaterialPreview(
                     new MaterialPreviewFrame(
                         BaseColorPng: baseColorOpacityPng,
@@ -1225,7 +1234,7 @@ namespace SmartExchanger.ViewModels
 
         private SKImage BuildRoughnessMetallicImage(GRContext context, int size, SKImage? roughnessImage, SKImage? metallicImage)
         {
-            var info = new SKImageInfo(size, size, SKColorType.RgbaF16, SKAlphaType.Opaque);
+            var info = new SKImageInfo(size, size, SKColorType.Rgba8888, SKAlphaType.Opaque);
             using var surface = SKSurface.Create(context, true, info) ?? throw new InvalidOperationException("Could not create the Roughness/Metallic GPU surface");
             SKRuntimeEffect effect = shaderService.GetCompiledShader(Shaders.Shader.PackRoughnessMetallic);
 
@@ -1294,7 +1303,7 @@ namespace SmartExchanger.ViewModels
             }
 
             using SKImage? image = BuildImageForInput(
-                    previewNode, previewNode.InputConnector, context, _texturePreviewSize
+                    previewNode, previewNode.InputConnector, context, _renderingOptions.TexturePreviewSize
                 );
 
             if (image is null)
@@ -1302,7 +1311,7 @@ namespace SmartExchanger.ViewModels
                 PublishTexturePreview(TexturePreviewFrame.Empty);
                 return;
             }
-            using SKBitmap bitmap = CreatePreviewBitmap(context, image, _texturePreviewSize, _texturePreviewSize);
+            using SKBitmap bitmap = CreatePreviewBitmap(context, image, _renderingOptions.TexturePreviewSize, _renderingOptions.TexturePreviewSize);
             int rowBytes = bitmap.RowBytes;
             int bufferSize = checked(rowBytes * bitmap.Height);
             byte[] pixels = new byte[bufferSize];

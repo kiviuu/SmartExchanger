@@ -13,5 +13,5 @@ half4 main(float2 position){
     );
     half finalAlpha = colorBaseColor.a * opacity;
 
-    return half4(colorBaseColor.rgb * finalAlpha, finalAlpha);
+    return half4(colorBaseColor.rgb * opacity, finalAlpha);
 }

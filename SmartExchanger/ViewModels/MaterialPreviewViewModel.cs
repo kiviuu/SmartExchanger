@@ -11,12 +11,16 @@ using System.Windows.Media.Media3D;
 using Material = HelixToolkit.Wpf.SharpDX.Material;
 using MeshGeometry3D = HelixToolkit.SharpDX.MeshGeometry3D;
 using PerspectiveCamera = HelixToolkit.Wpf.SharpDX.PerspectiveCamera;
+using Microsoft.Extensions.Options;
+using SmartExchanger.Options;
 
 namespace SmartExchanger.ViewModels
 {
     public partial class MaterialPreviewViewModel : ObservableObject, IDisposable
     {
         private bool _isDisposed;
+        private readonly MaterialPreviewOptions _options;
+        private readonly string _environmentMapsDirectory;
         public DefaultEffectsManager EffectsManager { get; }
         public PerspectiveCamera Camera { get; }
         public MeshGeometry3D SphereGeometry { get; }
@@ -32,8 +36,13 @@ namespace SmartExchanger.ViewModels
         public ObservableCollection<EnvironmentMapItem> AvailableEnvironmentMaps { get; } = new();
         [ObservableProperty]
         private EnvironmentMapItem? _selectedEnvironmentMap;
-        public MaterialPreviewViewModel()
+        public MaterialPreviewViewModel(IOptions<MaterialPreviewOptions> options)
         {
+            ArgumentNullException.ThrowIfNull(options);
+            this._options = options.Value;
+            this._environmentMapsDirectory = Path.IsPathRooted(_options.EnvironmentMapsDirectory) ? _options.EnvironmentMapsDirectory :
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, _options.EnvironmentMapsDirectory));
+
             this.EffectsManager = new DefaultEffectsManager();
 
             this.Camera = new PerspectiveCamera
@@ -52,9 +61,9 @@ namespace SmartExchanger.ViewModels
             SphereMaterial = new PBRMaterial
             {
                 AlbedoColor = new HelixToolkit.Maths.Color4(1f, 1f, 1f, 1f),
-                RoughnessFactor = 0.5,
-                MetallicFactor = 0.0,
-                AmbientOcclusionFactor = 1.0,
+                RoughnessFactor = _options.DefaultRoughness,
+                MetallicFactor = _options.DefaultMetallic,
+                AmbientOcclusionFactor = _options.AmbientOcclusion,
                 RenderAlbedoMap = false,
                 RenderNormalMap = false,
                 RenderRoughnessMetallicMap = false,
@@ -64,7 +73,7 @@ namespace SmartExchanger.ViewModels
             };
 
             DiscoverEnvironmentMaps();
-            SelectedEnvironmentMap = AvailableEnvironmentMaps.FirstOrDefault();
+            SelectedEnvironmentMap = FindDefaultEnvironmentMap() ?? AvailableEnvironmentMaps.FirstOrDefault();
 
             IsSphereTransparent = false;
         }
@@ -99,8 +108,8 @@ namespace SmartExchanger.ViewModels
 
             if (roughnessMetallicMap is null)
             {
-                SphereMaterial.RoughnessFactor = 0.5;
-                SphereMaterial.MetallicFactor = 0.0;
+                SphereMaterial.RoughnessFactor = _options.DefaultRoughness;
+                SphereMaterial.MetallicFactor = _options.DefaultMetallic;
             }
             else
             {
@@ -124,14 +133,13 @@ namespace SmartExchanger.ViewModels
         private void DiscoverEnvironmentMaps()
         {
             AvailableEnvironmentMaps.Clear();
-            string directoryPath = Path.Combine(AppContext.BaseDirectory, "Assets", "EnvironmentMaps");
-            if (!Directory.Exists(directoryPath))
+            if (!Directory.Exists(_environmentMapsDirectory))
             {
-                Debug.WriteLine($"[Environment Maps] Directory doeas not exists: {directoryPath}");
+                Debug.WriteLine($"[Environment Maps] Directory doeas not exists: {_environmentMapsDirectory}");
                 return;
             }
 
-            IEnumerable<string> mapFiles = Directory.EnumerateFiles(directoryPath, "*.dds", SearchOption.TopDirectoryOnly)
+            IEnumerable<string> mapFiles = Directory.EnumerateFiles(_environmentMapsDirectory, "*.dds", SearchOption.TopDirectoryOnly)
                 .OrderBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase);
 
             foreach(string mapFilePath in mapFiles)
@@ -139,6 +147,16 @@ namespace SmartExchanger.ViewModels
                 string displayName = CreateEnvironmentMapDisplayName(mapFilePath);
                 AvailableEnvironmentMaps.Add(new EnvironmentMapItem(displayName, mapFilePath));
             }
+        }
+        private EnvironmentMapItem? FindDefaultEnvironmentMap()
+        {
+            if (string.IsNullOrWhiteSpace(_options.DefaultEnvironmentMap))
+            {
+                return null;
+            }
+            return AvailableEnvironmentMaps.FirstOrDefault(item => string.Equals(Path.GetFileName(item.FilePath), 
+                _options.DefaultEnvironmentMap, 
+                StringComparison.OrdinalIgnoreCase));
         }
         private static string CreateEnvironmentMapDisplayName(string filePath)
         {

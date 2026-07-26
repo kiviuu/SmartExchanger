@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Options;
+using SmartExchanger.Options;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
@@ -15,16 +17,29 @@ namespace SmartExchanger.Views
 {
     public partial class SplashWindow : Window
     {
+        public string ApplicationName { get; }
+        public string Subtitle { get; }
+        public string AuthorText { get; }
         public string CopyrightText { get;  }
         public string VersionText { get; }
-        public SplashWindow()
+        public SplashWindow(IOptions<ApplicationOptions> options)
         {
-            this.CopyrightText = $"© {DateTime.Now.Year} Bartosz Zięba. All rights reserved.";
+            ArgumentNullException.ThrowIfNull(options);
+            ApplicationOptions settings = options.Value;
+
+            ApplicationName = settings.Name;
+            Subtitle = settings.Subtitle;
+
+            AuthorText = $"Created by {settings.Author}";
+
+            CopyrightText =$"© {DateTime.Now.Year} {settings.CopyrightOwner}. All rights reserved.";
+
             Version? version = Assembly.GetExecutingAssembly().GetName().Version;
-            VersionText = version is null ? string.Empty : $"Version {version.Major}.{version.Minor}.{version.Build}";
+
+            VersionText = version is null ? string.Empty
+                    : $"Version {version.Major}.{version.Minor}.{version.Build}";
 
             InitializeComponent();
-
             DataContext = this;
         }
     }

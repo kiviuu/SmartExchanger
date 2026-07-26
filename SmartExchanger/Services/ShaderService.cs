@@ -1,15 +1,21 @@
 ﻿using SkiaSharp;
 using SmartExchanger.Shaders;
 using System.IO;
+using Microsoft.Extensions.Options;
+using SmartExchanger.Options;
 
 namespace SmartExchanger.Services
 {
     public class ShaderService : IShaderService, IDisposable
     {
-        private Dictionary<Shader, SKRuntimeEffect> CompiledShaders;
-        public ShaderService()
+        private Dictionary<Shader, SKRuntimeEffect> CompiledShaders = new();
+        private readonly string _sharedDirectory;
+        public ShaderService(IOptions<ShaderOptions> options)
         {
-            this.CompiledShaders = new();
+            ArgumentNullException.ThrowIfNull(options);
+            string configuredDirectory = options.Value.Directory;
+            this._sharedDirectory = Path.IsPathRooted(configuredDirectory) ? configuredDirectory :
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredDirectory));
         }
         public void CreateCompiledShader(Shader shader)
         {
@@ -17,7 +23,7 @@ namespace SmartExchanger.Services
             {
                 string shaderName = shader.ToShaderString();
                 string fileName = GetFileName(shaderName);
-                string filePath = Path.Combine(AppContext.BaseDirectory, "Shaders", String.Concat(fileName, ".sksl"));
+                string filePath = Path.Combine(_sharedDirectory, String.Concat(fileName, ".sksl"));
                 bool shaderCodeFounded = File.Exists(filePath);
                 if (!shaderCodeFounded)
                 {

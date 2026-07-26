@@ -71,6 +71,7 @@ namespace SmartExchanger.ViewModels.Nodes
                 }
                 SKBitmap? previousBitmap = _sourceBitmap;
                 _sourceBitmap = nextBitmap;
+                nextBitmap = null;
                 previousBitmap?.Dispose();
 
                 FilePath = filePath;
