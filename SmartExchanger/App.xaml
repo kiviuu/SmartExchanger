@@ -1,8 +1,12 @@
 ﻿<Application x:Class="SmartExchanger.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:SmartExchanger">
+             xmlns:local="clr-namespace:SmartExchanger"
+             ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
-         
+        <Style TargetType="{x:Type Window}">
+            <Setter Property="Icon"
+                    Value="/Assets/Icons/small-icon.ico" />
+        </Style>
     </Application.Resources>
 </Application>

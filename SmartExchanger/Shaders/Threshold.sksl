@@ -1,0 +1,15 @@
+uniform shader inputImage;
+uniform float threshold;
+uniform float softness;
+
+half4 main(float2 position)
+{
+	half4 color = inputImage.eval(position);
+	half luminance = dot(color.rgb, half3(0.2126, 0.7152, 0.0722));
+	half mask = smoothstep(
+			threshold - softness,
+			threshold + softness,
+			luminance
+		);
+	return half4(mask,mask,mask,color.a);
+}

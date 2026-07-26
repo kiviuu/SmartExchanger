@@ -1,0 +1,11 @@
+// kind=shader
+
+uniform shader inputImage;
+uniform float strength;
+
+half4 main(float2 position){
+    half4 color = inputImage.eval(position);
+    half3 inverted = 1.0 - color.rgb;
+    half3 result = mix(color.rgb, inverted, strength);
+    return half4(result, color.a);
+}

@@ -1,16 +1,27 @@
-﻿using System.Windows;
-using SkiaSharp.Views.Desktop;
-using SkiaSharp.Views.WPF;
-using SmartExchanger.ViewModels;
+﻿using SmartExchanger.ViewModels;
+using System.Windows;
 
 namespace SmartExchanger.Views
 {
     public partial class MainView : Window
     {
-        public MainView()
+        public MainView(MainViewModel mainViewModel)
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            DataContext = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
+            Closed += OnClosed;
+        }
+
+        private void OnClosed(object? sender, EventArgs e)
+        {
+            Closed -= OnClosed;
+
+            if (DataContext is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+
+            DataContext = null;
         }
     }
 }

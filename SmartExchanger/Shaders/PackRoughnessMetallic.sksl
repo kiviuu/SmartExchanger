@@ -1,0 +1,18 @@
+// kind=shader
+uniform shader roughnessImage;
+uniform shader metallicImage;
+
+half getScalarValue(half3 color){
+    return dot(color, half3(0.2126, 0.7152, 0.0722) );
+}
+
+half4 main(float2 position){
+    half3 colorRoughness = roughnessImage.eval(position).rgb;
+    half roughness = clamp(getScalarValue(colorRoughness), 0.0,1.0);
+
+    half3 colorMetallic = metallicImage.eval(position).rgb;
+    half metallic = clamp(getScalarValue(colorMetallic), 0.0, 1.0);
+
+    // R=AO, G=Roughness, B=Metallic
+    return half4( 1.0, roughness, metallic, 1.0 );
+}
