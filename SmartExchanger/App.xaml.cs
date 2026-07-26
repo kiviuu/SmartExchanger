@@ -42,9 +42,23 @@ namespace SmartExchanger
         protected override async void OnStartup(StartupEventArgs e)
         {
             await _host.StartAsync();
-            var mainView= _host.Services.GetRequiredService<MainView>();
-            mainView.Show();
             base.OnStartup(e);
+
+            var splashWindow = new SplashWindow();
+            splashWindow.Show();
+
+            await Dispatcher.InvokeAsync(static () => { }, System.Windows.Threading.DispatcherPriority.Loaded);
+
+            Task minimumSplashTime = Task.Delay(2000);
+            
+
+            var mainView = _host.Services.GetRequiredService<MainView>();
+
+            await minimumSplashTime;
+            MainWindow = mainView;
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
+            mainView.Show();
+            splashWindow.Close();
         }
 
         protected override async void OnExit(ExitEventArgs e)

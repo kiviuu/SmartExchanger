@@ -10,7 +10,8 @@
         xmlns:views="clr-namespace:SmartExchanger.Views"
         Title="Smart Exchanger" Height="720" Width="1280"
         ResizeMode="CanResize"
-        Background="#1E1E1E">
+        Background="#1E1E1E"
+        Icon="/Assets/Icons/small-icon.ico">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
