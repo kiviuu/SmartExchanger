@@ -23,6 +23,7 @@ namespace SmartExchanger.ViewModels.Nodes
         public Translate2DNodeViewModel()
         {
             Title = "Translate 2D";
+
             InputConnector = new ConnectorViewModel(this, "In");
             OutputConnector = new ConnectorViewModel(this, "Out");
             Inputs.Add(InputConnector);
@@ -32,91 +33,58 @@ namespace SmartExchanger.ViewModels.Nodes
         public override SKImage? Render(GRContext context, int size, NodeRenderInputs inputs)
         {
             SKImage? input = inputs.Get(InputConnector);
+
             if (input is null)
             {
                 return null;
             }
 
             using var surface = CreateGpuSurface(context, size);
-            var canvas = surface.Canvas;
+            SKCanvas canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
+
+            float offsetXPixels = SanitizeOffset(OffsetX) * size;
+            float offsetYPixels = SanitizeOffset(OffsetY) * size;
+
+            float rotationDegrees = NormalizeRotation(RotationDegrees);
+
+            float center = size * 0.5f;
+
+            // rotate texture
+            SKMatrix rotationMatrix = SKMatrix.CreateRotationDegrees(rotationDegrees, center, center);
+
+            // move rotated texture
+            SKMatrix translationMatrix = SKMatrix.CreateTranslation(offsetXPixels, offsetYPixels);
+
+            SKShaderTileMode tileMode = Wrap ? SKShaderTileMode.Repeat : SKShaderTileMode.Decal;
 
             var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None);
 
-            float rotationDegrees = NormalizeRotation(RotationDegrees);
-            int canvasSaveCount = canvas.Save();
-            try
-            {
-                canvas.ClipRect(new SKRect(0, 0, size, size));
-                if (Wrap)
-                {
-                    DrawWrapped(canvas, input, size, OffsetX, OffsetY, rotationDegrees, sampling);
-                }
-                else
-                {
-                    DrawWithoutWrap(canvas, input, size, OffsetX, OffsetY, rotationDegrees, sampling);
-                }
-            }
-            finally
-            {
-                canvas.RestoreToCount(canvasSaveCount);
-            }
+            using SKShader rotatedShader = SKShader.CreateImage(input, tileMode, tileMode, sampling, rotationMatrix)
+                ?? throw new InvalidOperationException(
+                    "Could not create the rotated image shader.");
 
-            
+            // rotate -> translate
+            using SKShader transformedShader = SKShader.CreateLocalMatrix(rotatedShader, translationMatrix)
+                ?? throw new InvalidOperationException(
+                    "Could not create the translated image shader.");
+
+            using var paint = new SKPaint
+                {
+                    Shader = transformedShader,
+                    BlendMode = SKBlendMode.Src,
+                    IsAntialias = false
+                };
+
+            canvas.DrawPaint(paint);
             return surface.Snapshot();
-        }
-
-        private static void DrawWrapped(SKCanvas canvas, SKImage input, int size, float offsetX, 
-            float offsetY, float rotationDegrees, SKSamplingOptions sampling)
-        {
-            float wrappedX = WrapOffset(offsetX) * size;
-            float wrappedY = WrapOffset(offsetY) * size;
-
-            float pivotX = wrappedX + size * 0.5f;
-            float pivotY = wrappedY + size * 0.5f;
-
-            canvas.RotateDegrees(rotationDegrees, pivotX, pivotY);
-
-            // needs three copy on every row -> left, right, up, down, and corners
-            for (int xIdx = -1; xIdx <= 1; xIdx++)
-            {
-                for (int yIdx = -1; yIdx <=1; yIdx++)
-                {
-                    float left = wrappedX + xIdx * size;
-                    float top = wrappedY + yIdx * size;
-
-                    var destination = new SKRect(left, top, left + size, top + size);
-
-                    canvas.DrawImage(input, destination, sampling);
-                }
-            }
-        }
-
-        private static void DrawWithoutWrap(SKCanvas canvas, SKImage input, int size, float offsetX, 
-            float offsetY, float rotationDegrees, SKSamplingOptions sampling)
-        {
-            float offsetXPixels = SanitizeOffset(offsetX) * size;
-            float offsetYPixels = SanitizeOffset(offsetY) * size;
-
-            float pivotX = offsetXPixels + size * 0.5f;
-            float pivotY = offsetYPixels + size * 0.5f;
-
-            var destination = new SKRect(offsetXPixels, offsetYPixels, offsetXPixels + size, offsetYPixels + size);
-
-            canvas.RotateDegrees(rotationDegrees, pivotX, pivotY);
-
-            canvas.DrawImage(input, destination, sampling);
         }
 
         private static float SanitizeOffset(float value)
         {
             return float.IsFinite(value) ? value : 0f;
         }
-        private static float WrapOffset(float value)
-        {
-            value = SanitizeOffset(value);
-            return value - MathF.Floor(value);
-        }
+
         private static float NormalizeRotation(float value)
         {
             if (!float.IsFinite(value))
@@ -136,4 +104,3 @@ namespace SmartExchanger.ViewModels.Nodes
         }
     }
 }
-
