@@ -389,7 +389,7 @@ namespace SmartExchanger.ViewModels
         {
             var previewInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
 
-            using var previewSurface = SKSurface.Create(context, true, previewInfo)
+            using var previewSurface = SKSurface.Create(context, true, previewInfo, 0, GRSurfaceOrigin.TopLeft)
                 ?? throw new InvalidOperationException(
                     "SkiaSharp could not create the GPU preview surface.");
 
@@ -1061,7 +1061,7 @@ namespace SmartExchanger.ViewModels
         {
             var imageInfo = new SKImageInfo(src.Width, src.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
             using var exportSurface = SKSurface.Create(
-                    context, true, imageInfo
+                    context, true, imageInfo, 0, GRSurfaceOrigin.TopLeft
                 );
             var canvas = exportSurface.Canvas;
             canvas.Clear(preserveTransparency ? SKColors.Transparent : SKColors.White);
@@ -1235,7 +1235,7 @@ namespace SmartExchanger.ViewModels
         private SKImage BuildRoughnessMetallicImage(GRContext context, int size, SKImage? roughnessImage, SKImage? metallicImage)
         {
             var info = new SKImageInfo(size, size, SKColorType.Rgba8888, SKAlphaType.Opaque);
-            using var surface = SKSurface.Create(context, true, info) ?? throw new InvalidOperationException("Could not create the Roughness/Metallic GPU surface");
+            using var surface = SKSurface.Create(context, true, info, 0, GRSurfaceOrigin.TopLeft) ?? throw new InvalidOperationException("Could not create the Roughness/Metallic GPU surface");
             SKRuntimeEffect effect = shaderService.GetCompiledShader(Shaders.Shader.PackRoughnessMetallic);
 
             // without Roughness: default value = 0.5
@@ -1285,7 +1285,7 @@ namespace SmartExchanger.ViewModels
                 BlendMode = SKBlendMode.Src
             };
             var destination = new SKRect(0,0,size,size);
-            using var surface = SKSurface.Create(context, true, info) ?? throw new InvalidOperationException("Could not create the Roughness/Metallic GPU surface");
+            using var surface = SKSurface.Create(context, true, info, 0, GRSurfaceOrigin.TopLeft) ?? throw new InvalidOperationException("Could not create the Roughness/Metallic GPU surface");
             surface.Canvas.Clear(SKColors.Transparent);
             surface.Canvas.DrawRect(destination, paint);
             return surface.Snapshot();

@@ -75,7 +75,7 @@ namespace SmartExchanger.ViewModels.Nodes
 
             var info = new SKImageInfo(size, size, SKColorType.RgbaF16, SKAlphaType.Premul);
 
-            return SKSurface.Create(context, true, info)
+            return SKSurface.Create(context, true, info, 0, GRSurfaceOrigin.TopLeft)
                    ?? throw new InvalidOperationException(
                        $"SkiaSharp could not create a {size}x{size} GPU surface.");
         }

@@ -49,7 +49,7 @@ namespace SmartExchanger
             try
             {
                 await _host.StartAsync();
-                ValidateConfiguration();
+                //ValidateConfiguration();
                 var applicationOptions = _host.Services.GetRequiredService<IOptions<ApplicationOptions>>().Value;
 
                 var splashWindow = _host.Services.GetRequiredService<SplashWindow>();
@@ -94,26 +94,26 @@ namespace SmartExchanger
             base.OnExit(e);
         }
 
-        private void ValidateConfiguration()
-        {
-            ArgumentNullException.ThrowIfNull(_host);
+        //private void ValidateConfiguration()
+        //{
+        //    ArgumentNullException.ThrowIfNull(_host);
 
-            IServiceProvider services =_host.Services;
-            _ = services
-                .GetRequiredService<IOptions<ApplicationOptions>>()
-                .Value;
-            _ = services
-                .GetRequiredService<IOptions<RenderingOptions>>()
-                .Value;
-            _ = services
-                .GetRequiredService<IOptions<MaterialPreviewOptions>>()
-                .Value;
-            _ = services
-                .GetRequiredService<IOptions<ShaderOptions>>()
-                .Value;
-            _ = services
-                .GetRequiredService<IOptions<ExportOptions>>()
-                .Value;
-        }
+        //    IServiceProvider services =_host.Services;
+        //    _ = services
+        //        .GetRequiredService<IOptions<ApplicationOptions>>()
+        //        .Value;
+        //    _ = services
+        //        .GetRequiredService<IOptions<RenderingOptions>>()
+        //        .Value;
+        //    _ = services
+        //        .GetRequiredService<IOptions<MaterialPreviewOptions>>()
+        //        .Value;
+        //    _ = services
+        //        .GetRequiredService<IOptions<ShaderOptions>>()
+        //        .Value;
+        //    _ = services
+        //        .GetRequiredService<IOptions<ExportOptions>>()
+        //        .Value;
+        //}
     }
 }

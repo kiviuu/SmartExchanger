@@ -11,7 +11,8 @@ namespace SmartExchanger.Configuration
             services.AddOptions<ApplicationOptions>()
                 .Bind(configuration.GetRequiredSection(ApplicationOptions.SectionName))
                 .Validate(options => !string.IsNullOrWhiteSpace(options.Name), "Application name cannot be empty.")
-                .Validate(options => options.SplashMinimumDisplayMilliseconds is >= 0 and <= 10_000, "Splash display time must be between 0 and 10000 milliseconds.");
+                .Validate(options => options.SplashMinimumDisplayMilliseconds is >= 0 and <= 10_000, "Splash display time must be between 0 and 10000 milliseconds.")
+                .ValidateOnStart();
 
             services.AddOptions<RenderingOptions>()
                 .Bind(configuration.GetRequiredSection(RenderingOptions.SectionName))
@@ -20,22 +21,26 @@ namespace SmartExchanger.Configuration
                 .Validate(options => IsValidPreviewSize(options.TexturePreviewSize), "Texture preview size is invalid.")
                 .Validate(options => IsValidPreviewSize(options.MaterialPreviewSize), "Material preview size is invalid.")
                 .Validate(options => options.MinimumGpuCacheMb > 0, "Minimum GPU cache must be greater than zero.")
-                .Validate(options => options.MaximumGpuCacheMb >= options.MinimumGpuCacheMb, "Maximum GPU cache must be greater than or equal to the minimum GPU cache.");
+                .Validate(options => options.MaximumGpuCacheMb >= options.MinimumGpuCacheMb, "Maximum GPU cache must be greater than or equal to the minimum GPU cache.")
+                .ValidateOnStart();
 
             services.AddOptions<MaterialPreviewOptions>()
                 .Bind(configuration.GetRequiredSection(MaterialPreviewOptions.SectionName))
                 .Validate(options => !string.IsNullOrWhiteSpace(options.EnvironmentMapsDirectory), "Environment maps directory cannot be empty.")
                 .Validate(options => IsNormalized(options.DefaultRoughness), "Default roughness must be between 0 and 1.")
                 .Validate(options => IsNormalized(options.DefaultMetallic), "Default metallic must be between 0 and 1.")
-                .Validate(options => IsNormalized(options.AmbientOcclusion), "Ambient occlusion must be between 0 and 1.");
+                .Validate(options => IsNormalized(options.AmbientOcclusion), "Ambient occlusion must be between 0 and 1.")
+                .ValidateOnStart();
 
             services.AddOptions<ShaderOptions>()
                 .Bind(configuration.GetRequiredSection(ShaderOptions.SectionName))
-                .Validate(options => !string.IsNullOrWhiteSpace(options.Directory), "Shader directory cannot be empty.");
+                .Validate(options => !string.IsNullOrWhiteSpace(options.Directory), "Shader directory cannot be empty.")
+                .ValidateOnStart();
 
             services.AddOptions<ExportOptions>()
                 .Bind(configuration.GetRequiredSection(ExportOptions.SectionName))
-                .Validate(options => options.JpegQuality is >= 1 and <= 100, "JPEG quality must be between 1 and 100.");
+                .Validate(options => options.JpegQuality is >= 1 and <= 100, "JPEG quality must be between 1 and 100.")
+                .ValidateOnStart();
 
             return services;
         }

@@ -118,7 +118,19 @@ namespace SmartExchanger.ViewModels.Nodes
             var destination = SKRect.Create(0, 0, size, size);
             var sourceRect = SKRect.Create(0, 0, _sourceBitmap.Width, _sourceBitmap.Height);
             var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None);
-            canvas.DrawImage(sourceImage, sourceRect, destination, sampling);
+
+            int canvasSaveCount = canvas.Save();
+
+            try
+            {
+                canvas.Scale(sx: 1.0f, sy: -1.0f, px: size * 0.5f, py: size * 0.5f);
+                canvas.DrawImage(sourceImage, sourceRect, destination, sampling);
+            }
+            finally
+            {
+                canvas.RestoreToCount(canvasSaveCount);
+            }
+            
             return surface.Snapshot();
 
         }

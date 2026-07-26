@@ -12,6 +12,9 @@ namespace SmartExchanger.ViewModels.Nodes
         private float _offsetY;
 
         [ObservableProperty]
+        private float _rotationDegrees;
+
+        [ObservableProperty]
         private bool _wrap = true;
 
         public ConnectorViewModel InputConnector { get; }
@@ -40,26 +43,44 @@ namespace SmartExchanger.ViewModels.Nodes
 
             var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None);
 
-            if (Wrap)
+            float rotationDegrees = NormalizeRotation(RotationDegrees);
+            int canvasSaveCount = canvas.Save();
+            try
             {
-                DrawWrap(canvas, input, size, OffsetX, OffsetY, sampling);
+                canvas.ClipRect(new SKRect(0, 0, size, size));
+                if (Wrap)
+                {
+                    DrawWrapped(canvas, input, size, OffsetX, OffsetY, rotationDegrees, sampling);
+                }
+                else
+                {
+                    DrawWithoutWrap(canvas, input, size, OffsetX, OffsetY, rotationDegrees, sampling);
+                }
             }
-            else
+            finally
             {
-                DrawTranslated(canvas, input, size, OffsetX, OffsetY, sampling);
+                canvas.RestoreToCount(canvasSaveCount);
             }
+
+            
             return surface.Snapshot();
         }
 
-        private static void DrawWrap(SKCanvas canvas, SKImage input, int size, float offsetX, float offsetY, SKSamplingOptions sampling)
+        private static void DrawWrapped(SKCanvas canvas, SKImage input, int size, float offsetX, 
+            float offsetY, float rotationDegrees, SKSamplingOptions sampling)
         {
             float wrappedX = WrapOffset(offsetX) * size;
             float wrappedY = WrapOffset(offsetY) * size;
 
-            // needs two copy on every axis -> left, right, up, down
-            for (int xIdx = -1; xIdx <= 0; xIdx++)
+            float pivotX = wrappedX + size * 0.5f;
+            float pivotY = wrappedY + size * 0.5f;
+
+            canvas.RotateDegrees(rotationDegrees, pivotX, pivotY);
+
+            // needs three copy on every row -> left, right, up, down, and corners
+            for (int xIdx = -1; xIdx <= 1; xIdx++)
             {
-                for (int yIdx = -1; yIdx <=0; yIdx++)
+                for (int yIdx = -1; yIdx <=1; yIdx++)
                 {
                     float left = wrappedX + xIdx * size;
                     float top = wrappedY + yIdx * size;
@@ -71,11 +92,19 @@ namespace SmartExchanger.ViewModels.Nodes
             }
         }
 
-        private static void DrawTranslated(SKCanvas canvas, SKImage input, int size, float offsetX, float offsetY, SKSamplingOptions sampling)
+        private static void DrawWithoutWrap(SKCanvas canvas, SKImage input, int size, float offsetX, 
+            float offsetY, float rotationDegrees, SKSamplingOptions sampling)
         {
             float offsetXPixels = SanitizeOffset(offsetX) * size;
             float offsetYPixels = SanitizeOffset(offsetY) * size;
+
+            float pivotX = offsetXPixels + size * 0.5f;
+            float pivotY = offsetYPixels + size * 0.5f;
+
             var destination = new SKRect(offsetXPixels, offsetYPixels, offsetXPixels + size, offsetYPixels + size);
+
+            canvas.RotateDegrees(rotationDegrees, pivotX, pivotY);
+
             canvas.DrawImage(input, destination, sampling);
         }
 
@@ -88,5 +117,23 @@ namespace SmartExchanger.ViewModels.Nodes
             value = SanitizeOffset(value);
             return value - MathF.Floor(value);
         }
+        private static float NormalizeRotation(float value)
+        {
+            if (!float.IsFinite(value))
+            {
+                return 0f;
+            }
+            value %= 360f;
+            if (value > 180f)
+            {
+                value -= 360f;
+            }
+            else if (value < -180f)
+            {
+                value += 360f;
+            }
+            return value;
+        }
     }
 }
+
