@@ -10,6 +10,7 @@ namespace SmartExchanger.ViewModels.Nodes
     /// </summary>
     public abstract partial class BaseNodeViewModel : ObservableObject
     {
+        public Guid Id { get; internal set; } = Guid.NewGuid();
         [ObservableProperty]
         private Point _location;
 

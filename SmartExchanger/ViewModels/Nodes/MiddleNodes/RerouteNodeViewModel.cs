@@ -9,8 +9,8 @@ namespace SmartExchanger.ViewModels.Nodes
         public RerouteNodeViewModel()
         {
             Title = "";
-            Input = new ConnectorViewModel(this, "In");
-            Output = new ConnectorViewModel(this, "Out");
+            Input = new ConnectorViewModel(this, "In", "in");
+            Output = new ConnectorViewModel(this, "Out", "out");
             Inputs.Add(Input);
             Outputs.Add(Output);
         }

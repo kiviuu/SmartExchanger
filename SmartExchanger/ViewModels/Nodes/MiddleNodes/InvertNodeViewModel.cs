@@ -20,8 +20,8 @@ namespace SmartExchanger.ViewModels.Nodes
         {
             this._shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
             Title = "Invert";
-            InputConnector = new ConnectorViewModel(this, "In");
-            OutputConnector = new ConnectorViewModel(this, "Out");
+            InputConnector = new ConnectorViewModel(this, "In", "textureIn");
+            OutputConnector = new ConnectorViewModel(this, "Out", "out");
             Inputs.Add(InputConnector);
             Outputs.Add(OutputConnector);
 

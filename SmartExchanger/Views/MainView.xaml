@@ -53,7 +53,17 @@
                          Background="#151515"
                          Tag="{Binding}">
                 <nodify:NodifyEditor.InputBindings>
-                    <KeyBinding Key="Delete" Command="{Binding DeleteSelectionCommand}" />
+                    <KeyBinding Key="Delete"
+                                Command="{Binding DeleteSelectionCommand}" />
+                    <KeyBinding Key="S"
+                                Modifiers="Control"
+                                Command="{Binding SaveProjectCommand}" />
+                    <KeyBinding Key="S"
+                                Modifiers="Control+Shift"
+                                Command="{Binding SaveProjectAsCommand}" />
+                    <KeyBinding Key="O"
+                                Modifiers="Control"
+                                Command="{Binding OpenProjectCommand}" />
                 </nodify:NodifyEditor.InputBindings>
                 <nodify:NodifyEditor.ItemContainerStyle>
                     <Style TargetType="{x:Type nodify:ItemContainer}">
@@ -71,6 +81,17 @@
 
                 <nodify:NodifyEditor.ContextMenu>
                     <ContextMenu>
+                        <MenuItem Header="Open project..."
+                                  Command="{Binding OpenProjectCommand}"
+                                  InputGestureText="Ctrl+O" />
+                        <MenuItem Header="Save project"
+                                  Command="{Binding SaveProjectCommand}"
+                                  InputGestureText="Ctrl+S" />
+                        <MenuItem Header="Save project as..."
+                                  Command="{Binding SaveProjectAsCommand}"
+                                  InputGestureText="Ctrl+Shift+S" />
+
+                        <Separator />
                         <MenuItem Header="Create Node">
                             <MenuItem Header="Start Nodes">
                                 <MenuItem Header="Color"

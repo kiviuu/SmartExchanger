@@ -9,7 +9,7 @@ namespace SmartExchanger.ViewModels.Nodes
         public TexturePreviewNodeViewModel()
         {
             Title = "Texture Preview";
-            InputConnector = new ConnectorViewModel(this, "In");
+            InputConnector = new ConnectorViewModel(this, "In", "textureIn");
             Inputs.Add(InputConnector);
         }
 

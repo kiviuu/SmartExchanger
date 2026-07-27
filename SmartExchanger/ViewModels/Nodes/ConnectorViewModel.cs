@@ -1,10 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.Reflection.Metadata;
 
 namespace SmartExchanger.ViewModels.Nodes
 {
     public partial class ConnectorViewModel : ObservableObject
     {
         public BaseNodeViewModel Node { get; }
+        public string Id { get; }
         public string Title { get; }
 
         [ObservableProperty]
@@ -13,9 +15,14 @@ namespace SmartExchanger.ViewModels.Nodes
         [ObservableProperty]
         private bool _isConnected;
 
-        public ConnectorViewModel(BaseNodeViewModel node, string title)
+        public ConnectorViewModel(BaseNodeViewModel node, string title, string id)
         {
-            Node = node;
+            Node = node ?? throw new ArgumentNullException(nameof(node));
+
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            ArgumentException.ThrowIfNullOrWhiteSpace(title);
+
+            Id = id;
             Title = title;
         }
     }

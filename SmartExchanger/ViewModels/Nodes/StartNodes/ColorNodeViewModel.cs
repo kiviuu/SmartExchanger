@@ -30,7 +30,7 @@ namespace SmartExchanger.ViewModels.Nodes
         public ColorNodeViewModel()
         {
             Title = "Color";
-            OutputConnector = new ConnectorViewModel(this, "Out");
+            OutputConnector = new ConnectorViewModel(this, "Out", "out");
             Outputs.Add(OutputConnector);
         }
 

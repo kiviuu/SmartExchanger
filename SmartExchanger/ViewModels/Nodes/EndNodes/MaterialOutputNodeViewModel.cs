@@ -14,11 +14,11 @@ namespace SmartExchanger.ViewModels.Nodes
         public MaterialOutputNodeViewModel()
         {
             Title = "Material Output";
-            BaseColorConnector = new ConnectorViewModel(this, "Base Color");
-            NormalConnector = new ConnectorViewModel(this, "Normal");
-            RoughnessConnector = new ConnectorViewModel(this, "Roughness");
-            MetallicConnector = new ConnectorViewModel(this, "Metalic");
-            OpacityConnector = new ConnectorViewModel(this, "Opacity");
+            BaseColorConnector = new ConnectorViewModel(this, "Base Color", "baseColor");
+            NormalConnector = new ConnectorViewModel(this, "Normal", "normal");
+            RoughnessConnector = new ConnectorViewModel(this, "Roughness", "roughness");
+            MetallicConnector = new ConnectorViewModel(this, "Metallic", "metallic");
+            OpacityConnector = new ConnectorViewModel(this, "Opacity", "opacity");
             Inputs.Add(BaseColorConnector);
             Inputs.Add(NormalConnector);
             Inputs.Add(RoughnessConnector);

@@ -12,7 +12,7 @@ namespace SmartExchanger.ViewModels.Nodes
         public ValueNodeViewModel()
         {
             Title = "Value";
-            OutputConnector = new ConnectorViewModel(this, "Out");
+            OutputConnector = new ConnectorViewModel(this, "Out", "out");
             Outputs.Add(OutputConnector);
         }
         public override SKImage? Render(GRContext context, int size, NodeRenderInputs inputs)

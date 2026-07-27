@@ -24,8 +24,8 @@ namespace SmartExchanger.ViewModels.Nodes
         {
             Title = "Perlin Noise Turbulence";
 
-            InputConnector = new ConnectorViewModel(this, "In");
-            OutputConnector = new ConnectorViewModel(this, "Out");
+            InputConnector = new ConnectorViewModel(this, "In", "textureIn");
+            OutputConnector = new ConnectorViewModel(this, "Out", "out");
 
             Inputs.Add(InputConnector);
             Outputs.Add(OutputConnector);
