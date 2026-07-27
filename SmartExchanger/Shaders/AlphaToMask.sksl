@@ -1,0 +1,8 @@
+// kind = shader
+uniform shader inputImage;
+
+half4 main(float2 position){
+    half alpha = inputImage.eval(position).a;
+    return half4(alpha, alpha, alpha, 1.0);
+
+}

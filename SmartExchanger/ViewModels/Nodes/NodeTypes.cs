@@ -7,6 +7,7 @@ namespace SmartExchanger.ViewModels.Nodes
         ValueNode,
         TextureSizeNode,
         TextureInputNode,
+        LinearGradientNode,
 
 
         PerlinNoiseNode,
@@ -18,6 +19,9 @@ namespace SmartExchanger.ViewModels.Nodes
         WorleyNoiseNode,
         HeightToNormalNode,
         Translate2DNode,
+        ScatterTextureNode,
+        AlphaToMaskNode,
+        ApplyOpacityMaskNode,
 
 
         MaterialOutputNode,

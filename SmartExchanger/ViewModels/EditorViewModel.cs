@@ -685,6 +685,10 @@ namespace SmartExchanger.ViewModels
                 NodeType.TextureInputNode => new TextureInputNodeViewModel(),
                 NodeType.Translate2DNode => new Translate2DNodeViewModel(),
                 NodeType.TexturePreviewNode => new TexturePreviewNodeViewModel(),
+                NodeType.ScatterTextureNode => new ScatterTextureNodeViewModel(),
+                NodeType.AlphaToMaskNode => new AlphaToMaskNodeViewModel(shaderService),
+                NodeType.ApplyOpacityMaskNode => new ApplyOpacityMaskNodeViewModel(shaderService),
+                NodeType.LinearGradientNode => new LinearGradientNodeViewModel(),
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(nodeType), nodeType, "Unknown node type")
             };

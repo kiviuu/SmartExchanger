@@ -82,6 +82,9 @@
                                 <MenuItem Header="Texture Input"
                                           Command="{Binding CreateNodeCommand}"
                                           CommandParameter="{x:Static nodes:NodeType.TextureInputNode}" />
+                                <MenuItem Header="Linear Gradient"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.LinearGradientNode}" />
                             </MenuItem>
 
                             <MenuItem Header="Middle Nodes">
@@ -109,9 +112,18 @@
                                 <MenuItem Header="Height To Normal"
                                           Command="{Binding CreateNodeCommand}"
                                           CommandParameter="{x:Static nodes:NodeType.HeightToNormalNode}" />
+                                <MenuItem Header="Alpha To Mask"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.AlphaToMaskNode}" />
+                                <MenuItem Header="Apply Opacity Mask"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.ApplyOpacityMaskNode}" />
                                 <MenuItem Header="Translate 2D"
                                           Command="{Binding CreateNodeCommand}"
-                                          CommandParameter="{x:Static nodes:NodeType.Translate2DNode}"/>
+                                          CommandParameter="{x:Static nodes:NodeType.Translate2DNode}" />
+                                <MenuItem Header="Scatter Texture"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.ScatterTextureNode}" />
                             </MenuItem>
 
                             <MenuItem Header="End Nodes">

@@ -34,10 +34,12 @@ namespace SmartExchanger.Views
 
             CopyrightText =$"© {DateTime.Now.Year} {settings.CopyrightOwner}. All rights reserved.";
 
-            Version? version = Assembly.GetExecutingAssembly().GetName().Version;
 
-            VersionText = version is null ? string.Empty
-                    : $"Version {version.Major}.{version.Minor}.{version.Build}";
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string? infoVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            string displayVersion = string.IsNullOrWhiteSpace(infoVersion) ? string.Empty : infoVersion;
+            displayVersion = displayVersion.Split("+")[0];
+            VersionText = $"Version {displayVersion}";
 
             InitializeComponent();
             DataContext = this;

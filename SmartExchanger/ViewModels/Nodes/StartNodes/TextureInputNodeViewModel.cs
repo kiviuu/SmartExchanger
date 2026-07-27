@@ -115,7 +115,19 @@ namespace SmartExchanger.ViewModels.Nodes
             canvas.Clear(SKColors.Transparent);
 
             using var sourceImage = SKImage.FromBitmap(this._sourceBitmap);
-            var destination = SKRect.Create(0, 0, size, size);
+
+
+            //var destination = SKRect.Create(0, 0, size, size);
+
+            float scale = MathF.Min(size / (float)_sourceBitmap.Width, size / (float)_sourceBitmap.Height);
+            float destinationWidth = _sourceBitmap.Width * scale;
+            float destinationHeight = _sourceBitmap.Height * scale;
+            float destinationX = (size - destinationWidth) * 0.5f;
+            float destinationY = (size - destinationHeight) * 0.5f;
+
+            var destination = SKRect.Create(destinationX, destinationY, destinationWidth, destinationHeight);
+
+
             var sourceRect = SKRect.Create(0, 0, _sourceBitmap.Width, _sourceBitmap.Height);
             var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None);
 
