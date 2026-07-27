@@ -17,9 +17,13 @@ namespace SmartExchanger.ViewModels.Nodes
 
         public ConnectorViewModel(BaseNodeViewModel node, string title, string id)
         {
-            Node = node;
-            Title = title;
+            Node = node ?? throw new ArgumentNullException(nameof(node));
+
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            ArgumentException.ThrowIfNullOrWhiteSpace(title);
+
             Id = id;
+            Title = title;
         }
     }
 }

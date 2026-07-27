@@ -1,10 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 using SkiaSharp;
 using SkiaSharp.Views.WPF;
 using SmartExchanger.Models;
+using SmartExchanger.Options;
+using SmartExchanger.Persistence;
 using SmartExchanger.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -15,8 +18,6 @@ using System.Runtime.InteropServices;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Microsoft.Extensions.Options;
-using SmartExchanger.Options;
 
 namespace SmartExchanger.ViewModels
 {
@@ -30,6 +31,8 @@ namespace SmartExchanger.ViewModels
     public partial class EditorViewModel : ObservableObject, IDisposable
     {
         private readonly IShaderService shaderService;
+        private readonly INodeFactory nodeFactory;
+        private readonly IGraphPersistenceService graphPersistenceService;
 
         private readonly RenderingOptions _renderingOptions;
         private readonly ExportOptions _exportOptions;
@@ -67,10 +70,13 @@ namespace SmartExchanger.ViewModels
         private bool _isRendering;
         private bool _isDisposed;
 
-        public EditorViewModel(IShaderService shaderService, IOptions<RenderingOptions> renderingOptions,
+        public EditorViewModel(IShaderService shaderService, INodeFactory nodeFactory, IGraphPersistenceService graphPersistenceService,
+            IOptions<RenderingOptions> renderingOptions,
             IOptions<ExportOptions> exportOptions)
         {
             this.shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
+            this.nodeFactory = nodeFactory ?? throw new ArgumentNullException(nameof(nodeFactory));
+            this.graphPersistenceService = graphPersistenceService ?? throw new ArgumentNullException(nameof(graphPersistenceService));
             ArgumentNullException.ThrowIfNull(renderingOptions);
             ArgumentNullException.ThrowIfNull(exportOptions);
             this._renderingOptions = renderingOptions.Value;
@@ -667,31 +673,7 @@ namespace SmartExchanger.ViewModels
 
             var mousePosition = Mouse.GetPosition(Application.Current.MainWindow);
 
-            BaseNodeViewModel newNode = nodeType switch
-            {
-                NodeType.ColorNode => new ColorNodeViewModel(),
-                NodeType.PerlinNoiseNode => new PerlinNoiseFractalNodeViewModel(),
-                NodeType.OutputNode => new OutputNodeViewModel(),
-                NodeType.BlendNode => new BlendNodeViewModel(),
-                NodeType.TextureSizeNode => CreateDefaultTextureSizeNode(),
-                NodeType.PerlinTurbulenceNode => new PerlinNoiseTurbulenceNodeViewModel(),
-                NodeType.RerouteNode => new RerouteNodeViewModel(),
-                NodeType.ThresholdNode => new ThresholdNodeViewModel(shaderService),
-                NodeType.InvertNode => new InvertNodeViewModel(shaderService),
-                NodeType.WorleyNoiseNode => new WorleyNoiseNodeViewModel(shaderService),
-                NodeType.ValueNode => new ValueNodeViewModel(),
-                NodeType.HeightToNormalNode => new HeightToNormalNodeViewModel(shaderService),
-                NodeType.MaterialOutputNode => new MaterialOutputNodeViewModel(),
-                NodeType.TextureInputNode => new TextureInputNodeViewModel(),
-                NodeType.Translate2DNode => new Translate2DNodeViewModel(),
-                NodeType.TexturePreviewNode => new TexturePreviewNodeViewModel(),
-                NodeType.ScatterTextureNode => new ScatterTextureNodeViewModel(),
-                NodeType.AlphaToMaskNode => new AlphaToMaskNodeViewModel(shaderService),
-                NodeType.ApplyOpacityMaskNode => new ApplyOpacityMaskNodeViewModel(shaderService),
-                NodeType.LinearGradientNode => new LinearGradientNodeViewModel(),
-                _ => throw new ArgumentOutOfRangeException(
-                    nameof(nodeType), nodeType, "Unknown node type")
-            };
+            BaseNodeViewModel newNode = nodeFactory.Create(nodeType);
 
             newNode.Location = new Point(mousePosition.X - 100, mousePosition.Y - 50);
             AddNodeInternal(newNode);
@@ -942,17 +924,16 @@ namespace SmartExchanger.ViewModels
             SelectedConnections.Clear();
             Nodes.Clear();
             AddNodeInternal(CreateDefaultTextureSizeNode());
+
+            CurrentProjectPath = null;
+
             InvalidateGraph(true);
         }
 
         private TextureSizeNodeViewModel CreateDefaultTextureSizeNode()
         {
-            var node = new TextureSizeNodeViewModel { Location = new Point(0, 0) };
-            if (node.AvailableSizes.Count > 0)
-            {
-                node.SelectedSize = node.AvailableSizes.Contains(_renderingOptions.DefaultTextureSize) ? _renderingOptions.DefaultTextureSize :
-                    node.AvailableSizes[0];
-            }
+            var node =(TextureSizeNodeViewModel)nodeFactory.Create(NodeType.TextureSizeNode);
+            node.Location = new Point(0, 0);
             return node;
         }
 

@@ -2,6 +2,7 @@
 using SmartExchanger.Services;
 using SmartExchanger.Configuration;
 using SmartExchanger.Options;
+using SmartExchanger.Persistence;
 
 namespace SmartExchanger
 {
@@ -39,6 +40,9 @@ namespace SmartExchanger
 
                     //services
                     services.AddSingleton<IShaderService, ShaderService>();
+                    services.AddSingleton<INodeFactory, NodeFactory>();
+                    services.AddSingleton<INodeStateSerializer,NodeStateSerializer>();
+                    services.AddSingleton<IGraphPersistenceService, GraphPersistenceService>();
                 })
                 .Build();
         }

@@ -210,6 +210,39 @@ namespace SmartExchanger.ViewModels.Nodes
             RefreshGradientState();
         }
 
+
+
+        public void ReplaceGradientStops(IEnumerable<GradientStopViewModel> stops)
+        {
+            ArgumentNullException.ThrowIfNull(stops);
+
+            GradientStopViewModel[] nextStops = stops.ToArray();
+
+            if (nextStops.Length < MinimumGradientStops || nextStops.Length > MaximumGradientStops)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(stops),
+                    $"A linear gradient must contain between " +
+                    $"{MinimumGradientStops} and " +
+                    $"{MaximumGradientStops} stops.");
+            }
+
+            foreach (GradientStopViewModel stop in GradientStops)
+            {
+                stop.PropertyChanged -= OnGradientStopPropertyChanged;
+            }
+
+            GradientStops.Clear();
+
+            foreach (GradientStopViewModel stop in nextStops)
+            {
+                AddStopInternal(stop,updateNode: false);
+            }
+
+            RefreshGradientState();
+        }
+
+
         private void AddStopInternal(GradientStopViewModel stop, bool updateNode)
         {
             stop.PropertyChanged += OnGradientStopPropertyChanged;
