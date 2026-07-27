@@ -44,7 +44,7 @@ namespace SmartExchanger.ViewModels.Nodes
         {
             Title = "Linear Gradient";
 
-            OutputConnector = new ConnectorViewModel(this, "Out");
+            OutputConnector = new ConnectorViewModel(this, "Out", "out");
 
             Outputs.Add(OutputConnector);
 

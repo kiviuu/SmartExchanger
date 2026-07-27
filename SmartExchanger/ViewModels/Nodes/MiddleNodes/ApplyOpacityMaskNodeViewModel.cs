@@ -17,9 +17,9 @@ namespace SmartExchanger.ViewModels.Nodes
         {
             this._shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
             Title = "Apply Opacity Mask";
-            TextureInputConnector = new ConnectorViewModel(this, "Texture");
-            MaskInputConnector = new ConnectorViewModel(this, "Mask");
-            OutputConnector = new ConnectorViewModel(this, "Out");
+            TextureInputConnector = new ConnectorViewModel(this, "Texture", "textureIn");
+            MaskInputConnector = new ConnectorViewModel(this, "Mask", "maskIn");
+            OutputConnector = new ConnectorViewModel(this, "Out", "out");
             Inputs.Add(TextureInputConnector);
             Inputs.Add(MaskInputConnector);
             Outputs.Add(OutputConnector);

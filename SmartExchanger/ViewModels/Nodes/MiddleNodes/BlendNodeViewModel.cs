@@ -23,10 +23,10 @@ namespace SmartExchanger.ViewModels.Nodes
         {
             Title = "Blend";
 
-            InputAConnector = new ConnectorViewModel(this, "A");
-            InputBConnector = new ConnectorViewModel(this, "B");
-            InputMaskConnector = new ConnectorViewModel(this, "Mask");
-            OutputConnector = new ConnectorViewModel(this, "Out");
+            InputAConnector = new ConnectorViewModel(this, "A", "textureAIn");
+            InputBConnector = new ConnectorViewModel(this, "B", "textureBIn");
+            InputMaskConnector = new ConnectorViewModel(this, "Mask", "maskIn");
+            OutputConnector = new ConnectorViewModel(this, "Out", "out");
 
             Inputs.Add(InputAConnector);
             Inputs.Add(InputBConnector);

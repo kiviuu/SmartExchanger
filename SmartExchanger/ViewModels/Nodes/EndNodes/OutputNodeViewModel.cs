@@ -25,7 +25,7 @@ namespace SmartExchanger.ViewModels.Nodes
         public OutputNodeViewModel()
         {
             Title = "Output";
-            InputConnector = new ConnectorViewModel(this, "In");
+            InputConnector = new ConnectorViewModel(this, "In", "textureIn");
             Inputs.Add(InputConnector);
         }
 

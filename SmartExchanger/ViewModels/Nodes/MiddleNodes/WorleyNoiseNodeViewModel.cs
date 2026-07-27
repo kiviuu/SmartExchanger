@@ -25,8 +25,8 @@ namespace SmartExchanger.ViewModels.Nodes
         {
             this._shaderService = shaderService;
             Title = "Worley Noise";
-            InputConnector = new ConnectorViewModel(this, "In");
-            OutputConnector = new ConnectorViewModel(this, "Out");
+            InputConnector = new ConnectorViewModel(this, "In", "textureIn");
+            OutputConnector = new ConnectorViewModel(this, "Out", "out");
             Inputs.Add(InputConnector);
             Outputs.Add(OutputConnector);
 

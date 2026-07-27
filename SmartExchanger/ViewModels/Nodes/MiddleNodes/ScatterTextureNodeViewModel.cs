@@ -33,8 +33,8 @@ namespace SmartExchanger.ViewModels.Nodes
         public ScatterTextureNodeViewModel()
         {
             Title = "Scatter Texture";
-            StampInputConnector = new ConnectorViewModel(this, "Stamp");
-            OutpuConnector = new ConnectorViewModel(this, "Out");
+            StampInputConnector = new ConnectorViewModel(this, "Stamp", "stampIn");
+            OutpuConnector = new ConnectorViewModel(this, "Out", "out");
             Inputs.Add(StampInputConnector);
             Outputs.Add(OutpuConnector);
         }
