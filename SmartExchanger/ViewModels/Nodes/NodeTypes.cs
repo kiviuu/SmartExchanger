@@ -7,6 +7,7 @@ namespace SmartExchanger.ViewModels.Nodes
         ValueNode,
         TextureSizeNode,
         TextureInputNode,
+        LinearGradientNode,
 
 
         PerlinNoiseNode,

@@ -191,6 +191,479 @@
             </StackPanel>
         </nodify:Node>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:LinearGradientNodeViewModel}">
+
+        <DataTemplate.Resources>
+
+            <!-- Szachownica pod przezroczystymi kolorami -->
+            <DrawingBrush x:Key="GradientCheckerBrush"
+                      TileMode="Tile"
+                      Viewport="0,0,12,12"
+                      ViewportUnits="Absolute">
+
+                <DrawingBrush.Drawing>
+                    <DrawingGroup>
+
+                        <GeometryDrawing Brush="#FF252525">
+                            <GeometryDrawing.Geometry>
+                                <RectangleGeometry Rect="0,0,12,12"/>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+
+                        <GeometryDrawing Brush="#FF383838">
+                            <GeometryDrawing.Geometry>
+                                <GeometryGroup>
+                                    <RectangleGeometry Rect="0,0,6,6"/>
+                                    <RectangleGeometry Rect="6,6,6,6"/>
+                                </GeometryGroup>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+
+                    </DrawingGroup>
+                </DrawingBrush.Drawing>
+            </DrawingBrush>
+
+            <Style x:Key="GradientChannelSliderStyle"
+               TargetType="Slider">
+
+                <Setter Property="Minimum"
+                    Value="0"/>
+
+                <Setter Property="Maximum"
+                    Value="255"/>
+
+                <Setter Property="TickFrequency"
+                    Value="1"/>
+
+                <Setter Property="IsSnapToTickEnabled"
+                    Value="True"/>
+
+                <Setter Property="VerticalAlignment"
+                    Value="Center"/>
+
+                <Setter Property="Margin"
+                    Value="7,0"/>
+            </Style>
+
+            <Style x:Key="GradientChannelLabelStyle"
+               TargetType="TextBlock">
+
+                <Setter Property="Width"
+                    Value="18"/>
+
+                <Setter Property="VerticalAlignment"
+                    Value="Center"/>
+
+                <Setter Property="Foreground"
+                    Value="#BBBBBB"/>
+
+                <Setter Property="FontWeight"
+                    Value="SemiBold"/>
+            </Style>
+
+            <Style x:Key="GradientChannelValueStyle"
+               TargetType="TextBlock">
+
+                <Setter Property="Width"
+                    Value="28"/>
+
+                <Setter Property="TextAlignment"
+                    Value="Right"/>
+
+                <Setter Property="VerticalAlignment"
+                    Value="Center"/>
+
+                <Setter Property="Foreground"
+                    Value="#999999"/>
+
+                <Setter Property="FontSize"
+                    Value="10"/>
+            </Style>
+
+        </DataTemplate.Resources>
+
+        <nodify:Node Header="{Binding Title}"
+                 Input="{Binding Inputs}"
+                 Output="{Binding Outputs}"
+                 Tag="{Binding DataContext,
+                               RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete"
+                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
+                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                          CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}"
+                                  Anchor="{Binding Anchor,
+                                                   Mode=OneWayToSource}"
+                                  IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}"
+                                   Anchor="{Binding Anchor,
+                                                    Mode=OneWayToSource}"
+                                   IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+
+            <Border Width="300"
+                Padding="10"
+                Background="#202020"
+                CornerRadius="4">
+
+                <StackPanel>
+
+                    <!-- Gradient preview -->
+                    <Grid Width="260"
+                      Height="44"
+                      HorizontalAlignment="Center">
+
+                        <Rectangle Fill="{StaticResource GradientCheckerBrush}"
+                               RadiusX="4"
+                               RadiusY="4"/>
+
+                        <Rectangle Fill="{Binding GradientPreviewBrush}"
+                               RadiusX="4"
+                               RadiusY="4"/>
+
+                        <Border BorderBrush="#686868"
+                            BorderThickness="1"
+                            CornerRadius="4"/>
+                    </Grid>
+
+                    <!-- Angle -->
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="48"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="42"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                               Text="Angle"
+                               Foreground="#CCCCCC"
+                               VerticalAlignment="Center"/>
+
+                        <Slider Grid.Column="1"
+                            Margin="7,0"
+                            Minimum="-180"
+                            Maximum="180"
+                            TickFrequency="1"
+                            Value="{Binding AngleDegrees,
+                                            Mode=TwoWay,
+                                            UpdateSourceTrigger=PropertyChanged,
+                                            Delay=75}"/>
+
+                        <TextBlock Grid.Column="2"
+                               Text="{Binding AngleDegrees,
+                                              StringFormat={}{0:0}°}"
+                               Foreground="#AAAAAA"
+                               TextAlignment="Right"
+                               VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Offset -->
+                    <Grid Margin="0,5,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="48"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="42"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                               Text="Offset"
+                               Foreground="#CCCCCC"
+                               VerticalAlignment="Center"/>
+
+                        <Slider Grid.Column="1"
+                            Margin="7,0"
+                            Minimum="-1"
+                            Maximum="1"
+                            TickFrequency="0.01"
+                            Value="{Binding Offset,
+                                            Mode=TwoWay,
+                                            UpdateSourceTrigger=PropertyChanged,
+                                            Delay=75}"/>
+
+                        <TextBlock Grid.Column="2"
+                               Text="{Binding Offset,
+                                              StringFormat={}{0:0.00}}"
+                               Foreground="#AAAAAA"
+                               TextAlignment="Right"
+                               VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <Border Height="1"
+                        Margin="0,9"
+                        Background="#343434"/>
+
+                    <!-- list header -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                               Text="Gradient stops"
+                               Foreground="#DDDDDD"
+                               FontWeight="SemiBold"/>
+
+                        <TextBlock Grid.Column="1"
+                               Text="{Binding StopsCountText}"
+                               Foreground="#777777"
+                               FontSize="10"
+                               VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- stops list -->
+                    <ScrollViewer Margin="0,6,0,0"
+                              MaxHeight="330"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+
+                        <ItemsControl ItemsSource="{Binding GradientStops}">
+
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+
+                                    <Border Margin="0,0,0,6"
+                                        Padding="7"
+                                        Background="#292929"
+                                        BorderBrush="#3B3B3B"
+                                        BorderThickness="1"
+                                        CornerRadius="4">
+
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="38"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="26"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- color preview -->
+                                                <Grid Grid.Column="0"
+                                                  Width="32"
+                                                  Height="32"
+                                                  VerticalAlignment="Top">
+
+                                                    <Rectangle Fill="{StaticResource GradientCheckerBrush}"
+                                                           RadiusX="3"
+                                                           RadiusY="3"/>
+
+                                                    <Rectangle Fill="{Binding PreviewBrush}"
+                                                           RadiusX="3"
+                                                           RadiusY="3"/>
+
+                                                    <Border BorderBrush="#777777"
+                                                        BorderThickness="1"
+                                                        CornerRadius="3"/>
+                                                </Grid>
+
+                                                <StackPanel Grid.Column="1"
+                                                        Margin="7,0,5,0">
+
+                                                    <TextBlock Text="{Binding HexColor}"
+                                                           Foreground="#DDDDDD"
+                                                           FontFamily="Consolas"
+                                                           FontSize="11"/>
+
+                                                    <Grid Margin="0,3,0,0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="48"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="34"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Column="0"
+                                                               Text="Position"
+                                                               Foreground="#999999"
+                                                               FontSize="10"
+                                                               VerticalAlignment="Center"/>
+
+                                                        <Slider Grid.Column="1"
+                                                            Margin="5,0"
+                                                            Minimum="0"
+                                                            Maximum="1"
+                                                            TickFrequency="0.01"
+                                                            Value="{Binding Position,
+                                                                            Mode=TwoWay,
+                                                                            UpdateSourceTrigger=PropertyChanged,
+                                                                            Delay=75}"/>
+
+                                                        <TextBlock Grid.Column="2"
+                                                               Text="{Binding Position,
+                                                                              StringFormat={}{0:0.00}}"
+                                                               Foreground="#AAAAAA"
+                                                               FontSize="10"
+                                                               TextAlignment="Right"
+                                                               VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <Button Grid.Column="2"
+                                                    Width="22"
+                                                    Height="22"
+                                                    Padding="0"
+                                                    Content="×"
+                                                    FontSize="14"
+                                                    Foreground="#DDDDDD"
+                                                    Background="#353535"
+                                                    BorderBrush="#484848"
+                                                    ToolTip="Remove gradient stop"
+                                                    Command="{Binding DataContext.RemoveGradientStopCommand,
+                                                                      RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                            </Grid>
+
+                                            <!-- edition RGBA -->
+                                            <Expander Margin="0,6,0,0"
+                                                  Header="RGBA channels"
+                                                  Foreground="#AAAAAA">
+
+                                                <StackPanel Margin="4,5,2,2">
+
+                                                    <!-- Red -->
+                                                    <Grid Margin="0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="18"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="28"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Column="0"
+                                                               Text="R"
+                                                               Style="{StaticResource GradientChannelLabelStyle}"/>
+
+                                                        <Slider Grid.Column="1"
+                                                            Style="{StaticResource GradientChannelSliderStyle}"
+                                                            Value="{Binding Red,
+                                                                            Mode=TwoWay,
+                                                                            UpdateSourceTrigger=PropertyChanged,
+                                                                            Delay=60}"/>
+
+                                                        <TextBlock Grid.Column="2"
+                                                               Text="{Binding Red}"
+                                                               Style="{StaticResource GradientChannelValueStyle}"/>
+                                                    </Grid>
+
+                                                    <!-- Green -->
+                                                    <Grid Margin="0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="18"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="28"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Column="0"
+                                                               Text="G"
+                                                               Style="{StaticResource GradientChannelLabelStyle}"/>
+
+                                                        <Slider Grid.Column="1"
+                                                            Style="{StaticResource GradientChannelSliderStyle}"
+                                                            Value="{Binding Green,
+                                                                            Mode=TwoWay,
+                                                                            UpdateSourceTrigger=PropertyChanged,
+                                                                            Delay=60}"/>
+
+                                                        <TextBlock Grid.Column="2"
+                                                               Text="{Binding Green}"
+                                                               Style="{StaticResource GradientChannelValueStyle}"/>
+                                                    </Grid>
+
+                                                    <!-- Blue -->
+                                                    <Grid Margin="0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="18"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="28"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Column="0"
+                                                               Text="B"
+                                                               Style="{StaticResource GradientChannelLabelStyle}"/>
+
+                                                        <Slider Grid.Column="1"
+                                                            Style="{StaticResource GradientChannelSliderStyle}"
+                                                            Value="{Binding Blue,
+                                                                            Mode=TwoWay,
+                                                                            UpdateSourceTrigger=PropertyChanged,
+                                                                            Delay=60}"/>
+
+                                                        <TextBlock Grid.Column="2"
+                                                               Text="{Binding Blue}"
+                                                               Style="{StaticResource GradientChannelValueStyle}"/>
+                                                    </Grid>
+
+                                                    <!-- Alpha -->
+                                                    <Grid Margin="0,1">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="18"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="28"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock Grid.Column="0"
+                                                               Text="A"
+                                                               Style="{StaticResource GradientChannelLabelStyle}"/>
+
+                                                        <Slider Grid.Column="1"
+                                                            Style="{StaticResource GradientChannelSliderStyle}"
+                                                            Value="{Binding Alpha,
+                                                                            Mode=TwoWay,
+                                                                            UpdateSourceTrigger=PropertyChanged,
+                                                                            Delay=60}"/>
+
+                                                        <TextBlock Grid.Column="2"
+                                                               Text="{Binding Alpha}"
+                                                               Style="{StaticResource GradientChannelValueStyle}"/>
+                                                    </Grid>
+
+                                                </StackPanel>
+                                            </Expander>
+
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Buttons -->
+                    <Grid Margin="0,3,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0"
+                            Height="27"
+                            Margin="0,0,5,0"
+                            Content="+ Add stop"
+                            Command="{Binding AddGradientStopCommand}"/>
+
+                        <Button Grid.Column="1"
+                            Width="62"
+                            Height="27"
+                            Content="Reset"
+                            Command="{Binding ResetGradientCommand}"/>
+                    </Grid>
+
+                </StackPanel>
+            </Border>
+
+        </nodify:Node>
+    </DataTemplate>
 
 
 

@@ -82,6 +82,9 @@
                                 <MenuItem Header="Texture Input"
                                           Command="{Binding CreateNodeCommand}"
                                           CommandParameter="{x:Static nodes:NodeType.TextureInputNode}" />
+                                <MenuItem Header="Linear Gradient"
+                                          Command="{Binding CreateNodeCommand}"
+                                          CommandParameter="{x:Static nodes:NodeType.LinearGradientNode}" />
                             </MenuItem>
 
                             <MenuItem Header="Middle Nodes">
