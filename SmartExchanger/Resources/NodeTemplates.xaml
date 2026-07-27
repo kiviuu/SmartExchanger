@@ -738,6 +738,161 @@
             </StackPanel>
         </nodify:Node>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:ScatterTextureNodeViewModel}">
+        <nodify:Node Header="{Binding Title}"
+             Input="{Binding Inputs}"
+             Output="{Binding Outputs}"
+             Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete"
+                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}"
+                                      Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                      IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}"
+                                       Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                       IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+
+            <StackPanel Margin="8">
+
+                <TextBlock Text="Count"
+                           Foreground="#CCCCCC"
+                           Margin="0,3"/>
+
+                <TextBox Text="{Binding Count, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                         MinWidth="70"/>
+
+                <TextBlock Text="Seed"
+                           Foreground="#CCCCCC"
+                           Margin="0,8,0,3"/>
+
+                <TextBox Text="{Binding Seed, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                         MinWidth="70"/>
+
+                <TextBlock Text="{Binding MinimumScale, StringFormat=Minimum Scale: {0:0.000}}"
+                           Foreground="#CCCCCC"
+                           Margin="0,8,0,3"/>
+
+                <Slider Minimum="0.005"
+                        Maximum="0.5"
+                        Value="{Binding MinimumScale, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+
+                <TextBlock Text="{Binding MaximumScale, StringFormat=Maximum Scale: {0:0.000}}"
+                           Foreground="#CCCCCC"
+                           Margin="0,8,0,3"/>
+
+                <Slider Minimum="0.005"
+                        Maximum="0.5"
+                        Value="{Binding MaximumScale, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+
+                <TextBlock Text="{Binding MinimumRotationDegrees, StringFormat=Minimum Rotation: {0:0}°}"
+                           Foreground="#CCCCCC"
+                           Margin="0,8,0,3"/>
+
+                <Slider Minimum="-180"
+                        Maximum="180"
+                        Value="{Binding MinimumRotationDegrees, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+
+                <TextBlock Text="{Binding MaximumRotationDegrees, StringFormat=Maximum Rotation: {0:0}°}"
+                           Foreground="#CCCCCC"
+                           Margin="0,8,0,3"/>
+
+                <Slider Minimum="-180"
+                        Maximum="180"
+                        Value="{Binding MaximumRotationDegrees, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+
+            </StackPanel>
+        </nodify:Node>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:AlphaToMaskNodeViewModel}">
+        <nodify:Node Header="{Binding Title}" 
+         Input="{Binding Inputs}" 
+         Output="{Binding Outputs}"
+         Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete" 
+                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
+                              CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}" 
+                                       Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                                       IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}" 
+                                      Anchor="{Binding Anchor, Mode=OneWayToSource}" 
+                                      IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+        </nodify:Node>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type nodes:ApplyOpacityMaskNodeViewModel}">
+        <nodify:Node Header="{Binding Title}"
+                     Input="{Binding Inputs}"
+                     Output="{Binding Outputs}"
+                     Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
+            <nodify:Node.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete"
+                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding}"/>
+                </ContextMenu>
+            </nodify:Node.ContextMenu>
+
+            <nodify:Node.InputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeInput Header="{Binding Title}"
+                                      Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                      IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.InputConnectorTemplate>
+
+            <nodify:Node.OutputConnectorTemplate>
+                <DataTemplate>
+                    <nodify:NodeOutput Header="{Binding Title}"
+                                       Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                       IsConnected="{Binding IsConnected}"/>
+                </DataTemplate>
+            </nodify:Node.OutputConnectorTemplate>
+
+            <Border Width="180"
+                    Margin="8"
+                    Padding="6"
+                    Background="#202020"
+                    CornerRadius="3">
+
+                <TextBlock Text="White = visible&#10;Black = transparent"
+                           Foreground="#999999"
+                           FontSize="10"
+                           TextAlignment="Center"/>
+            </Border>
+        </nodify:Node>
+    </DataTemplate>
+
 
 
 

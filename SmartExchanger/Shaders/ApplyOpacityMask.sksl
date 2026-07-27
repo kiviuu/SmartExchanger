@@ -1,0 +1,13 @@
+// kind = shader
+
+uniform shader inputImage;
+uniform shader inputMask;
+
+half4 main(float2 position){
+    half4 textureColor = inputImage.eval(position);
+    half4 maskColor = inputMask.eval(position);
+
+    half maskValue = dot(maskColor.rgb, half3(0.2126, 0.7152, 0.0722));
+    maskValue = clamp(maskValue, 0.0, 1.0);
+    return textureColor * maskValue;
+}

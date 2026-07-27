@@ -18,6 +18,9 @@ namespace SmartExchanger.ViewModels.Nodes
         WorleyNoiseNode,
         HeightToNormalNode,
         Translate2DNode,
+        ScatterTextureNode,
+        AlphaToMaskNode,
+        ApplyOpacityMaskNode,
 
 
         MaterialOutputNode,

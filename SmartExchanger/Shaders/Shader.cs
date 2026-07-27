@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SmartExchanger.Shaders
+﻿namespace SmartExchanger.Shaders
 {
     public enum Shader
     {
@@ -11,7 +7,9 @@ namespace SmartExchanger.Shaders
         WorleyNoise,
         HeightToNormal,
         PackRoughnessMetallic,
-        PackBaseColorOpacity
+        PackBaseColorOpacity,
+        AlphaToMask,
+        ApplyOpacityMask
     }
 
 
@@ -27,6 +25,8 @@ namespace SmartExchanger.Shaders
                 Shader.HeightToNormal => "HeightToNormal",
                 Shader.PackRoughnessMetallic => "PackRoughnessMetallic",
                 Shader.PackBaseColorOpacity => "PackBaseColorOpacity",
+                Shader.AlphaToMask => "AlphaToMask",
+                Shader.ApplyOpacityMask => "ApplyOpacityMask",
                 _ => shader.ToString()
             };
         }
