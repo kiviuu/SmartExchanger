@@ -7,10 +7,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 	<ApplicationIcon>Assets\Icons\small-icon.ico</ApplicationIcon>
+	<InterceptorsNamespaces>
+		$(InterceptorsNamespaces);Microsoft.Extensions.Configuration.Binder.SourceGeneration
+	</InterceptorsNamespaces>
   </PropertyGroup>
 
 	<PropertyGroup>
-		<Version>1.0.0-alpha</Version>
+		<Version>1.0.0-alpha.2</Version>
 		<AssemblyVersion>1.0.0.0</AssemblyVersion>
 		<FileVersion>1.0.0.0</FileVersion>
 	</PropertyGroup>
