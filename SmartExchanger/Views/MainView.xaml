@@ -5,8 +5,6 @@
         xmlns:vm="clr-namespace:SmartExchanger.ViewModels"
         xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
-        xmlns:helpers="clr-namespace:SmartExchanger.Helpers"
         xmlns:views="clr-namespace:SmartExchanger.Views"
         Title="Smart Exchanger" Height="720" Width="1280"
         ResizeMode="CanResize"
@@ -33,15 +31,6 @@
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
-            <skia:SKGLElement helpers:SkiaExtensions.Editor="{Binding Editor}"
-                              Width="1"
-                              Height="1"
-                              HorizontalAlignment="Left"
-                              VerticalAlignment="Top"
-                              IsHitTestVisible="False"
-                              Opacity="0.001"
-                              Panel.ZIndex="1000" />
-
             <nodify:NodifyEditor DataContext="{Binding Editor}"
                                  x:Name="GraphEditor"
                          ItemsSource="{Binding Nodes}" 

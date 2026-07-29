@@ -37,16 +37,13 @@
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     <PackageReference Include="Nodify" Version="7.3.0" />
     <PackageReference Include="SkiaSharp" Version="4.150.1" />
-	  <PackageReference Include="SkiaSharp.Direct3D.Vortice" Version="4.150.1" />
-	  <PackageReference Include="Vortice.Direct3D12" Version="3.8.3" />
-	  <PackageReference Include="Vortice.DXGI" Version="3.8.3" />
-    <PackageReference Include="SkiaSharp.Views" Version="4.150.0" />
-    <PackageReference Include="SkiaSharp.Views.WPF" Version="4.150.0" />
-    <PackageReference Include="OpenTK" Version="4.9.4" />
-    <PackageReference Include="OpenTK.GLWpfControl" Version="4.3.3" />
+	<PackageReference Include="SkiaSharp.Direct3D.Vortice" Version="4.150.1" />
+	<PackageReference Include="Vortice.Direct3D12" Version="3.8.3" />
+	<PackageReference Include="Vortice.DXGI" Version="3.8.3" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Helpers\" />
     <Folder Include="Rendering\MaterialPreview\Triplanar\" />
     <Folder Include="Repositories\" />
     <Folder Include="Shaders\MaterialPreview\Helix\Common\" />

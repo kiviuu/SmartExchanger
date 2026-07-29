@@ -3,6 +3,7 @@ using SmartExchanger.Services;
 using SmartExchanger.Configuration;
 using SmartExchanger.Options;
 using SmartExchanger.Persistence;
+using SmartExchanger.Services.Graphics;
 
 namespace SmartExchanger
 {
@@ -43,6 +44,7 @@ namespace SmartExchanger
                     services.AddSingleton<INodeFactory, NodeFactory>();
                     services.AddSingleton<INodeStateSerializer,NodeStateSerializer>();
                     services.AddSingleton<IGraphPersistenceService, GraphPersistenceService>();
+                    services.AddSingleton<ISkiaGpuRenderHost, Direct3DSkiaGpuRenderHost>();
                 })
                 .Build();
         }

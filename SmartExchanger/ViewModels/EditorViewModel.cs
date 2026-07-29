@@ -4,11 +4,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 using SkiaSharp;
-using SkiaSharp.Views.WPF;
 using SmartExchanger.Models;
 using SmartExchanger.Options;
 using SmartExchanger.Persistence;
 using SmartExchanger.Services;
+using SmartExchanger.Services.Graphics;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -32,6 +32,7 @@ namespace SmartExchanger.ViewModels
         private readonly IShaderService shaderService;
         private readonly INodeFactory nodeFactory;
         private readonly IGraphPersistenceService graphPersistenceService;
+        private readonly ISkiaGpuRenderHost _gpuRenderHost;
 
         private readonly RenderingOptions _renderingOptions;
         private readonly ExportOptions _exportOptions;
@@ -58,7 +59,6 @@ namespace SmartExchanger.ViewModels
 
 
         // One persistnet SKGElement is the owner of this GRContext
-        private GRContext? _graphicsContext;
         private Action? _requestGpuRender;
 
         private long _graphRevision;
@@ -70,12 +70,12 @@ namespace SmartExchanger.ViewModels
         private bool _isDisposed;
 
         public EditorViewModel(IShaderService shaderService, INodeFactory nodeFactory, IGraphPersistenceService graphPersistenceService,
-            IOptions<RenderingOptions> renderingOptions,
-            IOptions<ExportOptions> exportOptions)
+            IOptions<RenderingOptions> renderingOptions, IOptions<ExportOptions> exportOptions, ISkiaGpuRenderHost gpuRenderHost)
         {
             this.shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
             this.nodeFactory = nodeFactory ?? throw new ArgumentNullException(nameof(nodeFactory));
             this.graphPersistenceService = graphPersistenceService ?? throw new ArgumentNullException(nameof(graphPersistenceService));
+            this._gpuRenderHost = gpuRenderHost ?? throw new ArgumentNullException(nameof(gpuRenderHost));
             ArgumentNullException.ThrowIfNull(renderingOptions);
             ArgumentNullException.ThrowIfNull(exportOptions);
             this._renderingOptions = renderingOptions.Value;
@@ -86,8 +86,10 @@ namespace SmartExchanger.ViewModels
 
             SetupDefaultScene();
             UpdateConnectorStates();
-        }
 
+            this._gpuRenderHost.SetRenderCallback(RenderPendingOutputs);
+            SetGpuRenderRequest(_gpuRenderHost.RequestRender);
+        }
         public void SetGpuRenderRequest(Action? requestGpuRender)
         {
             if (_isDisposed)
@@ -103,21 +105,6 @@ namespace SmartExchanger.ViewModels
                 _purgeOnNextRender = true;
                 requestGpuRender();
             }
-        }
-
-        public void SetGraphicsContext(GRContext context)
-        {
-            ArgumentNullException.ThrowIfNull(context);
-
-            if (_isDisposed || ReferenceEquals(_graphicsContext, context))
-            {
-                return;
-            }
-
-            _graphicsContext = context;
-            _configuredGpuCacheLimitBytes = 0;
-            _renderedGraphRevision = -1;
-            _purgeOnNextRender = true;
         }
 
         private void SetupDefaultScene()
@@ -292,68 +279,59 @@ namespace SmartExchanger.ViewModels
             _requestGpuRender?.Invoke();
         }
 
-        /// <summary>
-        /// Invoked only from persistent SKGElement (from PaintSurface event)
-        /// </summary>
-        public void RenderPendingOutputs(GRContext context, SKCanvas hostCanvas)
+        public void RenderPendingOutputs(GRContext context)
         {
             ArgumentNullException.ThrowIfNull(context);
-            ArgumentNullException.ThrowIfNull(hostCanvas);
-
-            hostCanvas.Clear(SKColors.Transparent);
 
             if (_isDisposed || context.IsAbandoned || _isRendering)
             {
                 return;
             }
 
-            SetGraphicsContext(context);
             ConfigureGpuResourceCache(context, GetTextureSize());
 
             bool graphChanged = _renderedGraphRevision != _graphRevision;
-            bool hasPendingExports = _pendingExports.Count > 0;
+            bool hasPendingExports = _pendingExports.Count() > 0;
 
-            if (!graphChanged && !_purgeOnNextRender && !hasPendingExports)
+            if(!graphChanged && !_purgeOnNextRender && !hasPendingExports)
             {
                 return;
             }
-
             _isRendering = true;
-
             try
             {
-                // Purge has to be invoked with active OpenGL context!
+                // Flush and purge must be executed through
+                // the GRContext that owns the GPU resources.
                 if (_purgeOnNextRender)
                 {
                     FlushAndPurge(context);
                 }
-
                 if (graphChanged)
                 {
-                    int textureSize = GetTextureSize();
+                    int texturSize = GetTextureSize();
+
                     var outputs = Nodes.OfType<OutputNodeViewModel>().ToList();
 
-                    foreach (var output in outputs)
+                    foreach(var output in outputs)
                     {
-                        RenderOutputPreview(output, context, textureSize);
+                        RenderOutputPreview(output, context, texturSize);
                     }
-
                     RenderTexturePreview(context);
                     RenderMaterialPreview(context);
                     _renderedGraphRevision = _graphRevision;
                 }
                 ProcessPendingExports(context);
-
                 FlushAndPurge(context);
                 _purgeOnNextRender = false;
-
                 LogGpuCacheUsage(context, GetTextureSize());
+
             }
-            catch (Exception exception)
+            catch(System.Exception ex)
             {
                 _renderedGraphRevision = -1;
                 _purgeOnNextRender = true;
-                Debug.WriteLine($"[Skia GPU] Render failed: {exception}");
+                Debug.WriteLine($"[Skia GPU] Render failed: {ex}");
+
                 throw;
             }
             finally
@@ -834,23 +812,6 @@ namespace SmartExchanger.ViewModels
             RequestGpuRender();
         }
 
-        /// <summary>
-        /// Mthod is called only from persistent object (SKGElement) with GPU access
-        /// </summary>
-        public void ClearGraphicsContext(GRContext context)
-        {
-            ArgumentNullException.ThrowIfNull(context);
-
-            if (!ReferenceEquals(_graphicsContext, context))
-            {
-                return;
-            }
-
-            _graphicsContext = null;
-            _configuredGpuCacheLimitBytes = 0;
-            _renderedGraphRevision = -1;
-            _purgeOnNextRender = true;
-        }
 
         [RelayCommand]
         private void CleanupGraphics()
@@ -866,9 +827,9 @@ namespace SmartExchanger.ViewModels
             }
 
             _isDisposed = true;
+            _gpuRenderHost.SetRenderCallback(null);
             _pendingSourceConnector = null;
             _requestGpuRender = null;
-            _graphicsContext = null;
 
             foreach (var output in Nodes.OfType<OutputNodeViewModel>())
             {
@@ -1029,7 +990,7 @@ namespace SmartExchanger.ViewModels
                 {
                     ExportOutput(context, exportRequest);
                 }
-                catch(Exception ex)
+                catch(System.Exception ex)
                 {
                     Debug.WriteLine($"[Texture export] Export failed: {ex}");
                     Application.Current?.Dispatcher.BeginInvoke(
