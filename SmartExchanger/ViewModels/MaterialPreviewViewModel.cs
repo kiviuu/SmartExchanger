@@ -21,6 +21,12 @@ namespace SmartExchanger.ViewModels
         private bool _isDisposed;
         private readonly MaterialPreviewOptions _options;
         private readonly string _environmentMapsDirectory;
+
+        // division around the sphere and between poles
+        private const int SphereThetaDivisions = 128;
+        private const int SpherePhiDivisions = 64;
+
+        public Transform3D SphereTransform { get; } = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1.0, 0.0, 0.0), -90.0));
         public DefaultEffectsManager EffectsManager { get; }
         public PerspectiveCamera Camera { get; }
         public MeshGeometry3D SphereGeometry { get; }
@@ -55,7 +61,12 @@ namespace SmartExchanger.ViewModels
             };
 
             var sphereBuilder = new MeshBuilder();
-            sphereBuilder.AddSphere(Vector3.Zero, 1.0f);
+            sphereBuilder.AddSphere(
+                    center: Vector3.Zero,
+                    radius: 1.0f,
+                    thetaDiv: SphereThetaDivisions,
+                    phiDiv: SpherePhiDivisions
+                );
             SphereGeometry = sphereBuilder.ToMeshGeometry3D();
 
             SphereMaterial = new PBRMaterial

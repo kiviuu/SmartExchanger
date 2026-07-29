@@ -51,8 +51,9 @@
 
                     <hx:MeshGeometryModel3D Geometry="{Binding SphereGeometry}"
                                             Material="{Binding SphereMaterial}"
+                                            Transform="{Binding SphereTransform}"
                                             IsTransparent="{Binding IsSphereTransparent}"
-                                            CullMode="None"/>
+                                            CullMode="None" />
                 </hx:Viewport3DX>
             </Grid>
             

@@ -105,6 +105,7 @@ SmartExchanger is currently distributed only for 64-bit Windows.
    **Worley Noise**.
 4. Add an **Output**, **Texture Preview**, or **Material Output** node.
 5. Drag from an output connector to a compatible input connector.
+6. To delete connection, left click on one of used connectors and press Delete (Keyboard).
 6. Change the node parameters and observe the preview update.
 7. To export a texture, right-click an **Output** node and select **Export**.
 
@@ -209,10 +210,13 @@ SmartExchanger/
 * Performance depends on texture resolution, graph complexity, and GPU drivers.
 * Early unsigned installers may display a Windows security warning.
 
-## Roadmap
+## Future Roadmap
 
+* [x] Better 3D preview scene and texture fitting on the sphere
 * [ ] Undo and redo
 * [ ] Copy and Paste selected node
+* [ ] Nodes group
+* [ ] New 3D preview objects
 * [ ] Additional procedural generators and filters
 
 ## Author
