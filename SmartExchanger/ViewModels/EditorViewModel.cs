@@ -15,7 +15,6 @@ using System.IO;
 using System.IO.Packaging;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -645,12 +644,28 @@ namespace SmartExchanger.ViewModels
         }
 
 
+        private Point? _pendingNodeCreationLocation;
+        public void CaptureNodeCreationLocation(Point graphLocation)
+        {
+            if (!double.IsFinite(graphLocation.X) || !double.IsFinite(graphLocation.Y))
+            {
+                return;
+            }
+            this._pendingNodeCreationLocation = graphLocation;
+        }
 
-        /* TODO: maybe some reflection ? */
+
         [RelayCommand]
         private void CreateNode(NodeType nodeType)
         {
             if (_isDisposed)
+            {
+                return;
+            }
+
+            Point ?requestedLocation = _pendingNodeCreationLocation;
+            this._pendingNodeCreationLocation = null;
+            if (requestedLocation is null)
             {
                 return;
             }
@@ -671,11 +686,9 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
-            var mousePosition = Mouse.GetPosition(Application.Current.MainWindow);
-
             BaseNodeViewModel newNode = nodeFactory.Create(nodeType);
 
-            newNode.Location = new Point(mousePosition.X - 100, mousePosition.Y - 50);
+            newNode.Location = requestedLocation.Value;
             AddNodeInternal(newNode);
             InvalidateGraph(requestGpuPurge: false);
         }

@@ -23,5 +23,14 @@ namespace SmartExchanger.Views
 
             DataContext = null;
         }
+
+        private void OnGraphContextMenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainViewModel mainViewModel)
+            {
+                return;
+            }
+            mainViewModel.Editor.CaptureNodeCreationLocation(GraphEditor.MouseLocation);
+        }
     }
 }

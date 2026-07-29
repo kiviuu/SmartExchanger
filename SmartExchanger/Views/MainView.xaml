@@ -43,6 +43,7 @@
                               Panel.ZIndex="1000" />
 
             <nodify:NodifyEditor DataContext="{Binding Editor}"
+                                 x:Name="GraphEditor"
                          ItemsSource="{Binding Nodes}" 
                          Connections="{Binding Connections}"
                          SelectedConnections="{Binding SelectedConnections}"
@@ -80,7 +81,7 @@
 
 
                 <nodify:NodifyEditor.ContextMenu>
-                    <ContextMenu>
+                    <ContextMenu Opened="OnGraphContextMenuOpened">
                         <MenuItem Header="Open project..."
                                   Command="{Binding OpenProjectCommand}"
                                   InputGestureText="Ctrl+O" />
