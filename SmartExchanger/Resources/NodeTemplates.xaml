@@ -188,6 +188,11 @@
                         IsEnabled="{Binding HasTexture}"
                         Command="{Binding ClearTextureCommand}"/>
                 </Grid>
+                <CheckBox Margin="0,8,0,0"
+                          HorizontalAlignment="Left"
+                          Content="Flip vertically"
+                          IsChecked="{Binding FlipVertically, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          ToolTip="Reflects the imported texture vertically." />
             </StackPanel>
         </nodify:Node>
     </DataTemplate>

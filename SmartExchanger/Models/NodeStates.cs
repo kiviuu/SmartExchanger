@@ -10,7 +10,7 @@ namespace SmartExchanger.Models
 
     public sealed record TextureSizeNodeState(int SelectedSize);
 
-    public sealed record TextureInputNodeState(string? FilePath);
+    public sealed record TextureInputNodeState(string? FilePath, bool? FlipVertically);
 
     public sealed record LinearGradientNodeState(float AngleDegrees, float Offset, IReadOnlyList<GradientStopState> Stops);
 
