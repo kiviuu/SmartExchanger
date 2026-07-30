@@ -1130,7 +1130,7 @@ namespace SmartExchanger.ViewModels
 
             //byte[]? baseColorPng = baseColorImage is null ? null :
             //    EncodeMaterialPreviewTexture(context, baseColorImage, _materialPreviewTextureSize);
-            bool isTransparent = opacityImage is not null;
+            bool isTransparent = true;
             byte[]? normalPng = normalImage is null ? null :
                 EncodeMaterialPreviewTexture(context, normalImage, _renderingOptions.MaterialPreviewSize);
 
@@ -1152,9 +1152,48 @@ namespace SmartExchanger.ViewModels
                         ? null
                         : EncodeMaterialPreviewTexture(context, roughnessMetallicImage, _renderingOptions.MaterialPreviewSize);
 
-                baseColorOpacityImage = BuildBaseColorOpacityImage(context, _renderingOptions.MaterialPreviewSize, baseColorImage, opacityImage);
-                byte[]? baseColorOpacityPng = baseColorOpacityImage is null ? null :
-                    EncodeMaterialPreviewTexture(context, baseColorOpacityImage, _renderingOptions.MaterialPreviewSize);
+                //byte[]? baseColorOpacityPng;
+
+                //if (opacityImage is null)
+                //{
+                //    baseColorOpacityPng = baseColorImage is null ? null
+                //            : EncodeMaterialPreviewTexture(
+                //                context,
+                //                baseColorImage,
+                //                _renderingOptions.MaterialPreviewSize);
+                //}
+                //else
+                //{
+                //    baseColorOpacityImage = BuildBaseColorOpacityImage(
+                //            context,
+                //            _renderingOptions.MaterialPreviewSize,
+                //            baseColorImage,
+                //            opacityImage);
+
+                //    baseColorOpacityPng = EncodeMaterialPreviewTexture(
+                //            context,
+                //            baseColorOpacityImage,
+                //            _renderingOptions.MaterialPreviewSize);
+                //}
+
+                byte[]? baseColorOpacityPng = null;
+
+                if (baseColorImage is not null || opacityImage is not null)
+                {
+                    baseColorOpacityImage =
+                        BuildBaseColorOpacityImage(
+                            context,
+                            _renderingOptions.MaterialPreviewSize,
+                            baseColorImage,
+                            opacityImage);
+
+                    baseColorOpacityPng =
+                        EncodeMaterialPreviewTexture(
+                            context,
+                            baseColorOpacityImage,
+                            _renderingOptions.MaterialPreviewSize);
+                }
+
                 PublishMaterialPreview(
                     new MaterialPreviewFrame(
                         BaseColorPng: baseColorOpacityPng,

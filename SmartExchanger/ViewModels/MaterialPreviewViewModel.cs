@@ -13,11 +13,14 @@ using MeshGeometry3D = HelixToolkit.SharpDX.MeshGeometry3D;
 using PerspectiveCamera = HelixToolkit.Wpf.SharpDX.PerspectiveCamera;
 using Microsoft.Extensions.Options;
 using SmartExchanger.Options;
+using SmartExchanger.Rendering.MaterialPreview.Triplanar;
 
 namespace SmartExchanger.ViewModels
 {
     public partial class MaterialPreviewViewModel : ObservableObject, IDisposable
     {
+        private const bool ForceOitPreviewPass = true;
+
         private bool _isDisposed;
         private readonly MaterialPreviewOptions _options;
         private readonly string _environmentMapsDirectory;
@@ -49,7 +52,7 @@ namespace SmartExchanger.ViewModels
             this._environmentMapsDirectory = Path.IsPathRooted(_options.EnvironmentMapsDirectory) ? _options.EnvironmentMapsDirectory :
                 Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, _options.EnvironmentMapsDirectory));
 
-            this.EffectsManager = new DefaultEffectsManager();
+            this.EffectsManager = new TriplanarEffectsManager();
 
             this.Camera = new PerspectiveCamera
             {
@@ -69,24 +72,32 @@ namespace SmartExchanger.ViewModels
                 );
             SphereGeometry = sphereBuilder.ToMeshGeometry3D();
 
-            SphereMaterial = new PBRMaterial
+
+            float triplanarScale = MathF.Max(_options.TriplanarScale, 0.0001f);
+            float triplanarBlendSharpness = Math.Clamp(_options.TriplanarBlendSharpness, 1.0f, 16.0f);
+            float triplanarNormalStrength = Math.Clamp(_options.TriplanarNormalStrength, 0.0f, 4.0f);
+
+            SphereMaterial = new TriplanarPBRMaterial()
             {
                 AlbedoColor = new HelixToolkit.Maths.Color4(1f, 1f, 1f, 1f),
                 RoughnessFactor = _options.DefaultRoughness,
                 MetallicFactor = _options.DefaultMetallic,
                 AmbientOcclusionFactor = _options.AmbientOcclusion,
+                ReflectanceFactor = 0.5,
                 RenderAlbedoMap = false,
                 RenderNormalMap = false,
                 RenderRoughnessMetallicMap = false,
-
                 RenderEnvironmentMap = true,
-                EnableAutoTangent = true
+
+                EnableAutoTangent = false,
+                RenderDisplacementMap = false,
+                DisplacementMapScaleMask = new Vector4(triplanarScale, triplanarBlendSharpness, triplanarNormalStrength, 0.0f)
             };
 
             DiscoverEnvironmentMaps();
             SelectedEnvironmentMap = FindDefaultEnvironmentMap() ?? AvailableEnvironmentMaps.FirstOrDefault();
 
-            IsSphereTransparent = false;
+            IsSphereTransparent = ForceOitPreviewPass;
         }
 
         public void ApplyPreview(MaterialPreviewFrame frame)
@@ -97,7 +108,7 @@ namespace SmartExchanger.ViewModels
             }
             // actualization on UI thread
             var dispatcher = Application.Current?.Dispatcher;
-            if ( dispatcher is not null && !dispatcher.CheckAccess() )
+            if (dispatcher is not null && !dispatcher.CheckAccess())
             {
                 dispatcher.BeginInvoke(new Action(() => ApplyPreview(frame)));
                 return;
@@ -107,7 +118,7 @@ namespace SmartExchanger.ViewModels
             TextureModel? albedoMap = CreateTexture(frame.BaseColorPng);
             SphereMaterial.AlbedoMap = albedoMap;
             SphereMaterial.RenderAlbedoMap = albedoMap is not null;
-            IsSphereTransparent = frame.IsTransparent;
+            IsSphereTransparent = ForceOitPreviewPass || frame.IsTransparent;
 
             TextureModel? normalMap = CreateTexture(frame.NormalPng);
             SphereMaterial.NormalMap = normalMap;
@@ -153,7 +164,7 @@ namespace SmartExchanger.ViewModels
             IEnumerable<string> mapFiles = Directory.EnumerateFiles(_environmentMapsDirectory, "*.dds", SearchOption.TopDirectoryOnly)
                 .OrderBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase);
 
-            foreach(string mapFilePath in mapFiles)
+            foreach (string mapFilePath in mapFiles)
             {
                 string displayName = CreateEnvironmentMapDisplayName(mapFilePath);
                 AvailableEnvironmentMaps.Add(new EnvironmentMapItem(displayName, mapFilePath));
@@ -165,8 +176,8 @@ namespace SmartExchanger.ViewModels
             {
                 return null;
             }
-            return AvailableEnvironmentMaps.FirstOrDefault(item => string.Equals(Path.GetFileName(item.FilePath), 
-                _options.DefaultEnvironmentMap, 
+            return AvailableEnvironmentMaps.FirstOrDefault(item => string.Equals(Path.GetFileName(item.FilePath),
+                _options.DefaultEnvironmentMap,
                 StringComparison.OrdinalIgnoreCase));
         }
         private static string CreateEnvironmentMapDisplayName(string filePath)
@@ -202,9 +213,9 @@ namespace SmartExchanger.ViewModels
                 TextureModel nextTexture = TextureModel.Create(value.FilePath) ?? throw new InvalidOperationException("HelixToolkit could not create the environment TextureModel.");
                 EnvironmentTexture = nextTexture;
                 SphereMaterial.RenderEnvironmentMap = true;
-                
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 EnvironmentTexture = null;
                 SphereMaterial.RenderEnvironmentMap = false;

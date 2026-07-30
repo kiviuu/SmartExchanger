@@ -2,16 +2,20 @@
 uniform shader baseColorImage;
 uniform shader opacityImage;
 
-half getScalarValue(half3 color){
-    return dot(color, half3(0.2126, 0.7152, 0.0722) );
+half getScalarValue(half3 color)
+{
+    return dot(color, half3(0.2126, 0.7152, 0.0722));
 }
 
-half4 main(float2 position){
-    half4 colorBaseColor = baseColorImage.eval(position);
+half4 main(float2 position)
+{
+    half3 baseColor = baseColorImage.eval(position).rgb;
     half opacity = clamp(
-        getScalarValue(opacityImage.eval(position).rgb), 0.0, 1.0
-    );
-    half finalAlpha = colorBaseColor.a * opacity;
+        getScalarValue(opacityImage.eval(position).rgb),
+        0.0,
+        1.0);
 
-    return half4(colorBaseColor.rgb * opacity, finalAlpha);
+    // W SmartExchangerze przezroczystość pochodzi wyłącznie
+    // z osobnego wejścia Opacity. Base Color nie steruje alfą.
+    return half4(baseColor * opacity, opacity);
 }

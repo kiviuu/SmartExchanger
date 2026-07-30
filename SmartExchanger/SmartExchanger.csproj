@@ -40,14 +40,29 @@
 	<PackageReference Include="SkiaSharp.Direct3D.Vortice" Version="4.150.1" />
 	<PackageReference Include="Vortice.Direct3D12" Version="3.8.3" />
 	<PackageReference Include="Vortice.DXGI" Version="3.8.3" />
+
+	  <PackageReference Include="JeremyAnsel.HLSL.Targets" Version="2.0.29" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup>
+	<ItemGroup>
+		<HLSLShader Include="Shaders\MaterialPreview\Helix\PS\psMeshPBRTriplanar.hlsl">
+			<ShaderProfile>ps_4_0</ShaderProfile>
+		</HLSLShader>
+
+		<HLSLShader Include="Shaders\MaterialPreview\Helix\PS\psMeshPBRTriplanarOIT.hlsl">
+			<ShaderProfile>ps_4_0</ShaderProfile>
+		</HLSLShader>
+
+		<HLSLShader Include="Shaders\MaterialPreview\Helix\PS\psMeshPBRTriplanarOITDP.hlsl">
+			<ShaderProfile>ps_4_0</ShaderProfile>
+		</HLSLShader>
+	</ItemGroup>
+
+
+	<ItemGroup>
     <Folder Include="Helpers\" />
-    <Folder Include="Rendering\MaterialPreview\Triplanar\" />
     <Folder Include="Repositories\" />
     <Folder Include="Shaders\MaterialPreview\Helix\Common\" />
-    <Folder Include="Shaders\MaterialPreview\Helix\PS\" />
   </ItemGroup>
   <ItemGroup>
 	  <Content Include="Shaders\**\*.sksl">

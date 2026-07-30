@@ -212,7 +212,7 @@ SmartExchanger/
 
 ## Future Roadmap
 
-* [x] Better 3D preview scene and texture fitting on the sphere
+* [x] Better 3D preview scene and texture fitting on the sphere (better lights and Triplanar Texture Mapping)
 * [ ] Undo and redo
 * [ ] Copy and Paste selected node
 * [ ] Nodes group
