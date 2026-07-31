@@ -1,23 +1,90 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:nodify="https://miroiu.github.io/nodify"
-                    xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes"
-                    xmlns:helpers="clr-namespace:SmartExchanger.Helpers">
+                    xmlns:nodes="clr-namespace:SmartExchanger.ViewModels.Nodes">
+
+    <ContextMenu x:Key="NodeContextMenu"
+                 x:Shared="False">
+
+        <MenuItem Header="Copy"
+                  InputGestureText="Ctrl+C"
+                  Command="{Binding PlacementTarget.Tag.CopySelectionCommand,
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  CommandParameter="{Binding PlacementTarget.DataContext,
+                                             RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+        <MenuItem Header="Cut"
+                  InputGestureText="Ctrl+X"
+                  Command="{Binding PlacementTarget.Tag.CutSelectionCommand,
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  CommandParameter="{Binding PlacementTarget.DataContext,
+                                             RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+        <MenuItem Header="Paste"
+                  InputGestureText="Ctrl+V"
+                  Command="{Binding PlacementTarget.Tag.PasteSelectionCommand,
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+        <Separator />
+
+        <MenuItem Header="Delete"
+                  InputGestureText="Delete"
+                  Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  CommandParameter="{Binding PlacementTarget.DataContext,
+                                             RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+    </ContextMenu>
+
+
+    <ContextMenu x:Key="OutputNodeContextMenu"
+                 x:Shared="False">
+
+        <MenuItem Header="Copy"
+                  InputGestureText="Ctrl+C"
+                  Command="{Binding PlacementTarget.Tag.CopySelectionCommand,
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  CommandParameter="{Binding PlacementTarget.DataContext,
+                                             RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+        <MenuItem Header="Cut"
+                  InputGestureText="Ctrl+X"
+                  Command="{Binding PlacementTarget.Tag.CutSelectionCommand,
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  CommandParameter="{Binding PlacementTarget.DataContext,
+                                             RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+        <MenuItem Header="Paste"
+                  InputGestureText="Ctrl+V"
+                  Command="{Binding PlacementTarget.Tag.PasteSelectionCommand,
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+        <Separator />
+
+        <MenuItem Header="Export"
+                  Command="{Binding PlacementTarget.Tag.SaveRenderCommand,
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  CommandParameter="{Binding PlacementTarget.DataContext,
+                                             RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+        <Separator />
+
+        <MenuItem Header="Delete"
+                  InputGestureText="Delete"
+                  Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  CommandParameter="{Binding PlacementTarget.DataContext,
+                                             RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+    </ContextMenu>
 
     <!-- Start Nodes -->
     <DataTemplate DataType="{x:Type nodes:ColorNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
                      Input="{Binding Inputs}" 
                      Output="{Binding Outputs}"
+                     ContextMenu="{StaticResource NodeContextMenu}"
                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                              CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.OutputConnectorTemplate>
                 <DataTemplate>
@@ -63,17 +130,10 @@
         <nodify:Node Header="{Binding Title}" 
                  Input="{Binding Inputs}" 
                  Output="{Binding Outputs}"
+                 ContextMenu="{StaticResource NodeContextMenu}"
                  Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
 
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                          CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
-
-            <nodify:Node.OutputConnectorTemplate>
+        <nodify:Node.OutputConnectorTemplate>
                 <DataTemplate>
                     <nodify:NodeOutput Header="{Binding Title}" 
                                    Anchor="{Binding Anchor, Mode=OneWayToSource}" 
@@ -95,15 +155,10 @@
     </DataTemplate>
     <DataTemplate DataType="{x:Type nodes:TextureSizeNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
+                     ContextMenu="{StaticResource NodeContextMenu}"
                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
 
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                              CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
+            
 
             <StackPanel Width="160" Margin="8">
                 <Grid Margin="0,2">
@@ -125,17 +180,9 @@
         <nodify:Node Header="{Binding Title}"
                  Input="{Binding Inputs}"
                  Output="{Binding Outputs}"
+                     ContextMenu="{StaticResource NodeContextMenu}"
                  Tag="{Binding DataContext,
                                RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete"
-                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
-                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                          CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.OutputConnectorTemplate>
                 <DataTemplate>
@@ -290,17 +337,9 @@
         <nodify:Node Header="{Binding Title}"
                  Input="{Binding Inputs}"
                  Output="{Binding Outputs}"
+                     ContextMenu="{StaticResource NodeContextMenu}"
                  Tag="{Binding DataContext,
                                RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete"
-                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
-                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                          CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -677,15 +716,8 @@
         <nodify:Node Header="{Binding Title}" 
                      Input="{Binding Inputs}" 
                      Output="{Binding Outputs}"
+                     ContextMenu="{StaticResource NodeContextMenu}"
                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                              CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -746,15 +778,8 @@
         <nodify:Node Header="{Binding Title}" 
                      Input="{Binding Inputs}" 
                      Output="{Binding Outputs}"
+                     ContextMenu="{StaticResource NodeContextMenu}"
                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                              CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -815,15 +840,8 @@
         <nodify:Node Header="{Binding Title}" 
                      Input="{Binding Inputs}" 
                      Output="{Binding Outputs}"
+                     ContextMenu="{StaticResource NodeContextMenu}"
                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                              CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -869,15 +887,8 @@
         <nodify:Node Header="{Binding Title}" 
                  Input="{Binding Inputs}" 
                  Output="{Binding Outputs}"
+                 ContextMenu="{StaticResource NodeContextMenu}"
                  Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                          CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.OutputConnectorTemplate>
                 <DataTemplate>
@@ -902,15 +913,8 @@
         <nodify:Node Header="{Binding Title}" 
                  Input="{Binding Inputs}" 
                  Output="{Binding Outputs}"
+                 ContextMenu="{StaticResource NodeContextMenu}"
                  Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                          CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.OutputConnectorTemplate>
                 <DataTemplate>
@@ -953,15 +957,8 @@
         <nodify:Node Header="{Binding Title}" 
              Input="{Binding Inputs}" 
              Output="{Binding Outputs}"
+             ContextMenu="{StaticResource NodeContextMenu}"
              Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                      Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                      CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.OutputConnectorTemplate>
                 <DataTemplate>
@@ -995,15 +992,8 @@
         <nodify:Node Header="{Binding Title}" 
                      Input="{Binding Inputs}" 
                      Output="{Binding Outputs}"
+                     ContextMenu="{StaticResource NodeContextMenu}"
                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                              CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -1055,15 +1045,8 @@
         <nodify:Node Header="{Binding Title}" 
                  Input="{Binding Inputs}" 
                  Output="{Binding Outputs}"
+                 ContextMenu="{StaticResource NodeContextMenu}"
                  Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                          CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -1106,17 +1089,9 @@
         <nodify:Node Header="{Binding Title}"
                  Input="{Binding Inputs}"
                  Output="{Binding Outputs}"
+                 ContextMenu="{StaticResource NodeContextMenu}"
                  Tag="{Binding DataContext,
                                RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete"
-                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
-                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                          CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -1220,15 +1195,8 @@
         <nodify:Node Header="{Binding Title}"
              Input="{Binding Inputs}"
              Output="{Binding Outputs}"
+             ContextMenu="{StaticResource NodeContextMenu}"
              Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete"
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                              CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -1301,15 +1269,8 @@
         <nodify:Node Header="{Binding Title}" 
          Input="{Binding Inputs}" 
          Output="{Binding Outputs}"
+         ContextMenu="{StaticResource NodeContextMenu}"
          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                              CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.OutputConnectorTemplate>
                 <DataTemplate>
@@ -1332,14 +1293,8 @@
         <nodify:Node Header="{Binding Title}"
                      Input="{Binding Inputs}"
                      Output="{Binding Outputs}"
+                     ContextMenu="{StaticResource NodeContextMenu}"
                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete"
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                              CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -1371,26 +1326,15 @@
         </nodify:Node>
     </DataTemplate>
 
-
-
+    
 
     <!-- End Nodes -->
     <DataTemplate DataType="{x:Type nodes:OutputNodeViewModel}">
         <nodify:Node Header="{Binding Title}" 
                      Input="{Binding Inputs}" 
                      Output="{Binding Outputs}"
+                     ContextMenu="{StaticResource OutputNodeContextMenu}"
                      Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete" 
-                              Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
-                              CommandParameter="{Binding}"/>
-                    <MenuItem Header="Export"
-                              Command="{Binding PlacementTarget.Tag.SaveRenderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                              CommandParameter="{Binding}" />
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -1445,17 +1389,9 @@
         <nodify:Node Header="{Binding Title}"
                  Input="{Binding Inputs}"
                  Output="{Binding Outputs}"
+                 ContextMenu="{StaticResource NodeContextMenu}"
                  Tag="{Binding DataContext,
                                RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete"
-                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
-                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                          CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>
@@ -1491,17 +1427,9 @@
         <nodify:Node Header="{Binding Title}"
                  Input="{Binding Inputs}"
                  Output="{Binding Outputs}"
+                 ContextMenu="{StaticResource NodeContextMenu}"
                  Tag="{Binding DataContext,
                                RelativeSource={RelativeSource AncestorType=nodify:NodifyEditor}}">
-
-            <nodify:Node.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete"
-                          Command="{Binding PlacementTarget.Tag.DeleteNodeCommand,
-                                            RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                          CommandParameter="{Binding}"/>
-                </ContextMenu>
-            </nodify:Node.ContextMenu>
 
             <nodify:Node.InputConnectorTemplate>
                 <DataTemplate>

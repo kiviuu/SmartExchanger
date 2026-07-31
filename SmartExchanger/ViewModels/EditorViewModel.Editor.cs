@@ -177,19 +177,40 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
-            var toRemove = SelectedConnections.ToList();
-            if (toRemove.Count == 0)
+            List<ConnectionViewModel> selectedConnections = SelectedConnections.ToList();
+
+            List<BaseNodeViewModel> selectedNodes =SelectedNodes.Where(node => node is not TextureSizeNodeViewModel).ToList();
+
+            bool graphChanged = false;
+
+            /*
+             * Remove explicitly selected connections first.
+             * Connections attached to selected nodes will be removed
+             * by RemoveNodesInternal.
+             */
+            foreach (ConnectionViewModel connection in selectedConnections)
             {
-                return;
+                if (!Connections.Contains(connection))
+                {
+                    continue;
+                }
+
+                RemoveConnectionInternal(connection);
+                graphChanged = true;
             }
 
-            foreach (var connection in toRemove)
+            if (RemoveNodesInternal(selectedNodes))
             {
-                RemoveConnectionInternal(connection);
+                graphChanged = true;
             }
 
             SelectedConnections.Clear();
-            InvalidateGraph(requestGpuPurge: true);
+            SelectedNodes.Clear();
+
+            if (graphChanged)
+            {
+                InvalidateGraph(requestGpuPurge: true);
+            }
         }
 
 
@@ -245,39 +266,17 @@ namespace SmartExchanger.ViewModels
         [RelayCommand]
         private void DeleteNode(BaseNodeViewModel node)
         {
-            if (_isDisposed || node is null || !Nodes.Contains(node))
+            if (_isDisposed || node is null || !Nodes.Contains(node) || node is TextureSizeNodeViewModel)
             {
                 return;
             }
 
-            if (node is TextureSizeNodeViewModel)
+            bool graphChanged = RemoveNodesInternal(new[] { node });
+
+            if (graphChanged)
             {
-                return;
+                InvalidateGraph(requestGpuPurge: true);
             }
-
-            if (_pendingSourceConnector?.Node == node)
-            {
-                _pendingSourceConnector = null;
-            }
-
-            var connectedEdges = Connections
-                .Where(c => c.Source.Node == node || c.Target.Node == node)
-                .ToList();
-
-            foreach (var connection in connectedEdges)
-            {
-                RemoveConnectionInternal(connection);
-            }
-
-            if (node is OutputNodeViewModel outputNode)
-            {
-                outputNode.ClearPreview();
-            }
-
-            DetachNode(node);
-            DisposeNode(node);
-            Nodes.Remove(node);
-            InvalidateGraph(requestGpuPurge: true);
         }
 
         [RelayCommand]
@@ -306,6 +305,7 @@ namespace SmartExchanger.ViewModels
             }
             Connections.Clear();
             SelectedConnections.Clear();
+            SelectedNodes.Clear();
             Nodes.Clear();
             AddNodeInternal(CreateDefaultTextureSizeNode());
 

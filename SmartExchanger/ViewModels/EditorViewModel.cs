@@ -17,6 +17,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Windows.UI.WebUI;
 
 namespace SmartExchanger.ViewModels
 {
@@ -33,6 +34,7 @@ namespace SmartExchanger.ViewModels
         private readonly INodeFactory nodeFactory;
         private readonly IGraphPersistenceService graphPersistenceService;
         private readonly ISkiaGpuRenderHost _gpuRenderHost;
+        private readonly INodeStateSerializer nodeStateSerializer;
 
         private readonly RenderingOptions _renderingOptions;
         private readonly ExportOptions _exportOptions;
@@ -44,6 +46,7 @@ namespace SmartExchanger.ViewModels
 
         public ObservableCollection<BaseNodeViewModel> Nodes { get; } = new();
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new();
+        public ObservableCollection<BaseNodeViewModel> SelectedNodes { get; } = new();
         public ObservableCollection<ConnectionViewModel> SelectedConnections { get; } = new();
 
         private readonly Dictionary<BaseNodeViewModel, Action> _nodePropertyHandlers =
@@ -70,11 +73,14 @@ namespace SmartExchanger.ViewModels
         private bool _isDisposed;
 
         public EditorViewModel(IShaderService shaderService, INodeFactory nodeFactory, IGraphPersistenceService graphPersistenceService,
-            IOptions<RenderingOptions> renderingOptions, IOptions<ExportOptions> exportOptions, ISkiaGpuRenderHost gpuRenderHost)
+            IOptions<RenderingOptions> renderingOptions, IOptions<ExportOptions> exportOptions, ISkiaGpuRenderHost gpuRenderHost,
+            INodeStateSerializer nodeStateSerializer)
         {
             this.shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
             this.nodeFactory = nodeFactory ?? throw new ArgumentNullException(nameof(nodeFactory));
             this.graphPersistenceService = graphPersistenceService ?? throw new ArgumentNullException(nameof(graphPersistenceService));
+            this.nodeStateSerializer = nodeStateSerializer ?? throw new ArgumentNullException(nameof(nodeStateSerializer));
+
             this._gpuRenderHost = gpuRenderHost ?? throw new ArgumentNullException(nameof(gpuRenderHost));
             ArgumentNullException.ThrowIfNull(renderingOptions);
             ArgumentNullException.ThrowIfNull(exportOptions);
@@ -83,6 +89,8 @@ namespace SmartExchanger.ViewModels
 
             this._minimumGpuCacheBytes = checked((long)_renderingOptions.MinimumGpuCacheMb * 1024L * 1024L);
             this._maximumGpuCacheBytes = checked((long)_renderingOptions.MaximumGpuCacheMb * 1024L * 1024L);
+
+            SelectedNodes.CollectionChanged += OnSelectedNodesChanged;
 
             SetupDefaultScene();
             UpdateConnectorStates();
@@ -561,6 +569,7 @@ namespace SmartExchanger.ViewModels
 
             Connections.Clear();
             SelectedConnections.Clear();
+            SelectedNodes.Clear();
             Nodes.Clear();
             _pendingExports.Clear();
 

@@ -175,6 +175,7 @@ namespace SmartExchanger.ViewModels
 
             Connections.Clear();
             SelectedConnections.Clear();
+            SelectedNodes.Clear();
             Nodes.Clear();
 
             foreach (BaseNodeViewModel node in loadedGraph.Nodes)

@@ -35,14 +35,30 @@
                                  x:Name="GraphEditor"
                          ItemsSource="{Binding Nodes}" 
                          Connections="{Binding Connections}"
+                         SelectedItems="{Binding SelectedNodes}"
+                         CanSelectMultipleItems="True"
                          SelectedConnections="{Binding SelectedConnections}"
                          ConnectionStartedCommand="{Binding StartConnectionCommand}"
                          ConnectionCompletedCommand="{Binding CompleteConnectionCommand}"
                          DisconnectConnectorCommand="{Binding DisconnectConnectorCommand}"
+                         MouseMove="OnGraphEditorMouseMove"
+                         PreviewMouseRightButtonDown="OnGraphEditorPreviewMouseRightButtonDown"
                          GridCellSize="15"
                          Background="#151515"
                          Tag="{Binding}">
                 <nodify:NodifyEditor.InputBindings>
+                    <KeyBinding Key="C" 
+                                Modifiers="Control"
+                                Command="{Binding CopySelectionCommand}" />
+
+                    <KeyBinding Key="X"
+                                Modifiers="Control"
+                                Command="{Binding CutSelectionCommand}" />
+
+                    <KeyBinding Key="V"
+                                Modifiers="Control"
+                                Command="{Binding PasteSelectionCommand}" />
+                    
                     <KeyBinding Key="Delete"
                                 Command="{Binding DeleteSelectionCommand}" />
                     <KeyBinding Key="S"
@@ -80,6 +96,22 @@
                         <MenuItem Header="Save project as..."
                                   Command="{Binding SaveProjectAsCommand}"
                                   InputGestureText="Ctrl+Shift+S" />
+
+                        <Separator />
+
+                        <MenuItem Header="Copy"
+                                  Command="{Binding CopySelectionCommand}"
+                                  InputGestureText="Ctrl+C" />
+
+                        <MenuItem Header="Cut"
+                                  Command="{Binding CutSelectionCommand}"
+                                  InputGestureText="Ctrl+X" />
+
+                        <MenuItem Header="Paste"
+                                  Command="{Binding PasteSelectionCommand}"
+                                  InputGestureText="Ctrl+V" />
+
+                        <Separator />
 
                         <Separator />
                         <MenuItem Header="Create Node">
