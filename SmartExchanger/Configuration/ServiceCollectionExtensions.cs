@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using SmartExchanger.Models;
 using SmartExchanger.Options;
 
 namespace SmartExchanger.Configuration
@@ -30,6 +31,10 @@ namespace SmartExchanger.Configuration
                 .Validate(options => IsNormalized(options.DefaultRoughness), "Default roughness must be between 0 and 1.")
                 .Validate(options => IsNormalized(options.DefaultMetallic), "Default metallic must be between 0 and 1.")
                 .Validate(options => IsNormalized(options.AmbientOcclusion), "Ambient occlusion must be between 0 and 1.")
+                .Validate(options => Enum.IsDefined(typeof(MaterialMappingMode), options.DefaultMappingMode), "Default material mapping mode is invalid.")
+                .Validate(options => float.IsFinite(options.TriplanarScale) && options.TriplanarScale is >= 0.1f and <= 16.0f, "Triplanar scale must be between 0.1 and 16.")
+                .Validate(options => float.IsFinite(options.TriplanarBlendSharpness) && options.TriplanarBlendSharpness is >= 1.0f and <= 16.0f,"Triplanar blend sharpness must be between 1 and 16.")
+                .Validate(options => float.IsFinite( options.TriplanarNormalStrength) && options.TriplanarNormalStrength is >= 0.0f and <= 4.0f, "Triplanar normal strength must be between 0 and 4.")
                 .ValidateOnStart();
 
             services.AddOptions<ShaderOptions>()

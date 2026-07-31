@@ -31,6 +31,16 @@ float SignNotZero(float value)
     return value < 0.0f ? -1.0f : 1.0f;
 }
 
+bool UseTriplanarMapping()
+{
+    // displacementMapScaleMask.w:
+    //
+    // 0.0 =  UV
+    // 1.0 = triplanar
+    return
+        displacementMapScaleMask.w >= 0.5f;
+}
+
 float3 CalculateGeometricNormal(PSInput input)
 {
     return bRenderFlat
@@ -104,6 +114,111 @@ float3 SampleTriplanarEmissive(TriplanarData data)
         texEmissiveMap.Sample(samplerSurface, data.uvX).rgb * data.weights.x +
         texEmissiveMap.Sample(samplerSurface, data.uvY).rgb * data.weights.y +
         texEmissiveMap.Sample(samplerSurface, data.uvZ).rgb * data.weights.z;
+}
+
+float4 SamplePreviewAlbedo(
+    PSInput input,
+    TriplanarData data)
+{
+    float4 result =
+        float4(
+            0.0f,
+            0.0f,
+            0.0f,
+            0.0f);
+
+    if (UseTriplanarMapping())
+    {
+        result =
+            SampleTriplanarAlbedo(
+                data);
+    }
+    else
+    {
+        result =
+            texDiffuseMap.Sample(
+                samplerSurface,
+                input.t);
+    }
+
+    return result;
+}
+
+float3 SamplePreviewRM(
+    PSInput input,
+    TriplanarData data)
+{
+    float3 result =
+        float3(
+            0.0f,
+            0.0f,
+            0.0f);
+
+    if (UseTriplanarMapping())
+    {
+        result =
+            SampleTriplanarRM(
+                data);
+    }
+    else
+    {
+        result =
+            texRMMap.Sample(
+                samplerSurface,
+                input.t).rgb;
+    }
+
+    return result;
+}
+
+float SamplePreviewAO(
+    PSInput input,
+    TriplanarData data)
+{
+    float result = 0.0f;
+
+    if (UseTriplanarMapping())
+    {
+        result =
+            SampleTriplanarAO(
+                data);
+    }
+    else
+    {
+        result =
+            texAOMap.Sample(
+                samplerSurface,
+                input.t).r;
+    }
+
+    return result;
+}
+
+float3 SamplePreviewEmissive(
+    PSInput input,
+    TriplanarData data)
+{
+    float3 result =
+        float3(
+            0.0f,
+            0.0f,
+            0.0f);
+
+    if (UseTriplanarMapping())
+    {
+        result =
+            SampleTriplanarEmissive(
+                data);
+    }
+    else
+    {
+        result =
+            texEmissiveMap.Sample(
+                samplerSurface,
+                input.t).rgb;
+    }
+
+    return result;
 }
 
 float3 DecodeNormalMap(float3 encodedNormal)
@@ -201,13 +316,31 @@ float3 SampleTriplanarNormal(
         worldNormalZ * data.weights.z);
 }
 
-float3 CalculateShadingNormal(
-    TriplanarData data,
-    float3 geometricNormal)
+float3 CalculateUvNormal(PSInput input, float3 geometricNormal)
 {
-    return bHasNormalMap
-        ? SampleTriplanarNormal(data, geometricNormal)
-        : geometricNormal;
+    if (!bHasNormalMap)
+    {
+        return geometricNormal;
+    }
+
+    float3 localNormal = BiasX2(texNormalMap.Sample(samplerSurface, input.t).xyz);
+
+    return PeturbNormal(localNormal, input.wp.xyz, geometricNormal, input.t);
+}
+
+float3 CalculateShadingNormal(PSInput input, TriplanarData data, float3 geometricNormal)
+{
+    if (!bHasNormalMap)
+    {
+        return geometricNormal;
+    }
+
+    if (UseTriplanarMapping())
+    {
+        return SampleTriplanarNormal(data, geometricNormal);
+    }
+
+    return CalculateUvNormal(input, geometricNormal);
 }
 
 float3 LightSurface(
@@ -362,6 +495,7 @@ float4 EvaluateTriplanarPBR(PSInput input)
         input.wp.xyz,
         geometricNormal);
     float3 N = CalculateShadingNormal(
+        input,
         triplanar,
         geometricNormal);
 
@@ -373,19 +507,28 @@ float4 EvaluateTriplanarPBR(PSInput input)
 
     if (bHasDiffuseMap)
     {
-        albedo *= SampleTriplanarAlbedo(triplanar);
+        albedo *=
+            SamplePreviewAlbedo(
+                input,
+                triplanar);
     }
 
     albedo = lerp(albedo, input.c, vertColorBlending);
 
     if (bHasRMMap)
     {
-        RMA.gb *= SampleTriplanarRM(triplanar).gb;
+        RMA.gb *=
+            SamplePreviewRM(
+                input,
+                triplanar).gb;
     }
 
     if (bHasAOMap)
     {
-        RMA.r *= SampleTriplanarAO(triplanar);
+        RMA.r *=
+            SamplePreviewAO(
+                input,
+                triplanar);
     }
     else if (SSAOEnabled)
     {
@@ -423,7 +566,10 @@ float4 EvaluateTriplanarPBR(PSInput input)
     float3 emissive = vMaterialEmissive.rgb;
     if (bHasEmissiveMap)
     {
-        emissive *= SampleTriplanarEmissive(triplanar);
+        emissive *=
+            SamplePreviewEmissive(
+                input,
+                triplanar);
     }
 
     float3 ambient = vLightAmbient.rgb * RMA.r;

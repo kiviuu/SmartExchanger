@@ -107,145 +107,6 @@ namespace SmartExchanger.ViewModels
             }
         }
 
-        private void SetupDefaultScene()
-        {
-            AddNodeInternal(CreateDefaultTextureSizeNode());
-        }
-
-        private void AddNodeInternal(BaseNodeViewModel node)
-        {
-            Action handler = () => OnNodePropertiesChanged(node);
-            _nodePropertyHandlers.Add(node, handler);
-            node.PropsChanged += handler;
-            Nodes.Add(node);
-        }
-
-        private void DetachNode(BaseNodeViewModel node)
-        {
-            if (_nodePropertyHandlers.Remove(node, out var handler))
-            {
-                node.PropsChanged -= handler;
-            }
-        }
-
-        private void OnNodePropertiesChanged(BaseNodeViewModel node)
-        {
-            InvalidateGraph(requestGpuPurge: node is TextureSizeNodeViewModel);
-        }
-
-        [RelayCommand]
-        private void StartConnection(object? parameter)
-        {
-            if (!_isDisposed)
-            {
-                _pendingSourceConnector = parameter as ConnectorViewModel;
-            }
-        }
-
-        [RelayCommand]
-        private void CompleteConnection(object? parameter)
-        {
-            if (_isDisposed)
-            {
-                _pendingSourceConnector = null;
-                return;
-            }
-
-            try
-            {
-                if (parameter is not ValueTuple<object, object> tuple ||
-                    tuple.Item2 is not ConnectorViewModel targetConnector)
-                {
-                    return;
-                }
-
-                var sourceConnector = _pendingSourceConnector;
-                if (sourceConnector is null || sourceConnector == targetConnector)
-                {
-                    return;
-                }
-
-                if (sourceConnector.Node == targetConnector.Node)
-                {
-                    return;
-                }
-
-                bool isSourceOutput = sourceConnector.Node.Outputs.Contains(sourceConnector);
-                bool isTargetInput = targetConnector.Node.Inputs.Contains(targetConnector);
-                if (!isSourceOutput || !isTargetInput)
-                {
-                    return;
-                }
-
-                if (WouldCreateCycle(sourceConnector.Node, targetConnector.Node))
-                {
-                    return;
-                }
-
-                var previous = Connections.FirstOrDefault(c => c.Target == targetConnector);
-                if (previous is not null)
-                {
-                    RemoveConnectionInternal(previous);
-                }
-
-                Connections.Add(new ConnectionViewModel(sourceConnector, targetConnector));
-                InvalidateGraph(requestGpuPurge: true);
-            }
-            finally
-            {
-                _pendingSourceConnector = null;
-            }
-        }
-
-        [RelayCommand]
-        private void DisconnectConnector(object? parameter)
-        {
-            if (_isDisposed || parameter is not ConnectorViewModel connector)
-            {
-                return;
-            }
-
-            var toRemove = Connections
-                .Where(c => c.Source == connector || c.Target == connector)
-                .ToList();
-
-            if (toRemove.Count == 0)
-            {
-                return;
-            }
-
-            foreach (var connection in toRemove)
-            {
-                RemoveConnectionInternal(connection);
-            }
-
-            InvalidateGraph(requestGpuPurge: true);
-        }
-
-        [RelayCommand]
-        private void RemoveConnection(object? parameter)
-        {
-            if (_isDisposed || parameter is not ConnectionViewModel connection)
-            {
-                return;
-            }
-
-            if (!Connections.Contains(connection))
-            {
-                SelectedConnections.Remove(connection);
-                return;
-            }
-
-            RemoveConnectionInternal(connection);
-            InvalidateGraph(requestGpuPurge: true);
-        }
-
-        private void RemoveConnectionInternal(ConnectionViewModel connection)
-        {
-            Connections.Remove(connection);
-            SelectedConnections.Remove(connection);
-        }
-
         private void InvalidateGraph(bool requestGpuPurge)
         {
             unchecked
@@ -256,22 +117,6 @@ namespace SmartExchanger.ViewModels
             _purgeOnNextRender |= requestGpuPurge;
             UpdateConnectorStates();
             RequestGpuRender();
-        }
-
-        private void UpdateConnectorStates()
-        {
-            foreach (var node in Nodes)
-            {
-                foreach (var input in node.Inputs)
-                {
-                    input.IsConnected = Connections.Any(c => c.Target == input);
-                }
-
-                foreach (var output in node.Outputs)
-                {
-                    output.IsConnected = Connections.Any(c => c.Source == output);
-                }
-            }
         }
 
         private void RequestGpuRender()
@@ -398,12 +243,7 @@ namespace SmartExchanger.ViewModels
             return bitmap;
         }
 
-        private int GetTextureSize()
-        {
-            return Nodes.OfType<TextureSizeNodeViewModel>().FirstOrDefault()?
-                    .SelectedSize ??
-                    _renderingOptions.DefaultTextureSize;
-        }
+        
 
         /// <summary>
         /// Conigure GPU resource caching
@@ -598,117 +438,6 @@ namespace SmartExchanger.ViewModels
                 $"limitBytes={context.GetResourceCacheLimit():N0}");
         }
 
-        [RelayCommand]
-        private void DeleteSelection()
-        {
-            if (_isDisposed)
-            {
-                return;
-            }
-
-            var toRemove = SelectedConnections.ToList();
-            if (toRemove.Count == 0)
-            {
-                return;
-            }
-
-            foreach (var connection in toRemove)
-            {
-                RemoveConnectionInternal(connection);
-            }
-
-            SelectedConnections.Clear();
-            InvalidateGraph(requestGpuPurge: true);
-        }
-
-
-        private Point? _pendingNodeCreationLocation;
-        public void CaptureNodeCreationLocation(Point graphLocation)
-        {
-            if (!double.IsFinite(graphLocation.X) || !double.IsFinite(graphLocation.Y))
-            {
-                return;
-            }
-            this._pendingNodeCreationLocation = graphLocation;
-        }
-
-
-        [RelayCommand]
-        private void CreateNode(NodeType nodeType)
-        {
-            if (_isDisposed)
-            {
-                return;
-            }
-
-            Point ?requestedLocation = _pendingNodeCreationLocation;
-            this._pendingNodeCreationLocation = null;
-            if (requestedLocation is null)
-            {
-                return;
-            }
-
-            // Nodes that may exist only once in the graph
-            if (nodeType == NodeType.TextureSizeNode &&
-                Nodes.OfType<TextureSizeNodeViewModel>().Any())
-            {
-                return;
-            }
-            if (nodeType == NodeType.MaterialOutputNode &&
-                Nodes.OfType<MaterialOutputNodeViewModel>().Any())
-            {
-                return;
-            }
-            if (nodeType == NodeType.TexturePreviewNode && Nodes.OfType<TexturePreviewNodeViewModel>().Any())
-            {
-                return;
-            }
-
-            BaseNodeViewModel newNode = nodeFactory.Create(nodeType);
-
-            newNode.Location = requestedLocation.Value;
-            AddNodeInternal(newNode);
-            InvalidateGraph(requestGpuPurge: false);
-        }
-
-        [RelayCommand]
-        private void DeleteNode(BaseNodeViewModel node)
-        {
-            if (_isDisposed || node is null || !Nodes.Contains(node))
-            {
-                return;
-            }
-
-            if (node is TextureSizeNodeViewModel)
-            {
-                return;
-            }
-
-            if (_pendingSourceConnector?.Node == node)
-            {
-                _pendingSourceConnector = null;
-            }
-
-            var connectedEdges = Connections
-                .Where(c => c.Source.Node == node || c.Target.Node == node)
-                .ToList();
-
-            foreach (var connection in connectedEdges)
-            {
-                RemoveConnectionInternal(connection);
-            }
-
-            if (node is OutputNodeViewModel outputNode)
-            {
-                outputNode.ClearPreview();
-            }
-
-            DetachNode(node);
-            DisposeNode(node);
-            Nodes.Remove(node);
-            InvalidateGraph(requestGpuPurge: true);
-        }
-
         private List<BaseNodeViewModel> GetTopologicallySortedNodes(
             BaseNodeViewModel targetNode, ConnectorViewModel targetInput)
         {
@@ -801,18 +530,6 @@ namespace SmartExchanger.ViewModels
             return false;
         }
 
-        public void ForceReleaseVRAM()
-        {
-            if (_isDisposed)
-            {
-                return;
-            }
-
-            _purgeOnNextRender = true;
-            RequestGpuRender();
-        }
-
-
         [RelayCommand]
         private void CleanupGraphics()
         {
@@ -870,54 +587,7 @@ namespace SmartExchanger.ViewModels
             public int GetHashCode(T obj) => RuntimeHelpers.GetHashCode(obj);
         }
 
-        [RelayCommand]
-        private void ClearWorkspace()
-        {
-            var result = System.Windows.MessageBox.Show("Are you sure you want to clear the workspace? This process cannot be undone!",
-                "Clear workspace", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result != MessageBoxResult.Yes)
-            {
-                return;
-            }
 
-            if (_isDisposed)
-            {
-                return;
-            }
-            _pendingSourceConnector = null;
-            foreach (var node in Nodes.OfType<OutputNodeViewModel>())
-            {
-                node.ClearPreview();
-            }
-            foreach(var node in Nodes.ToList())
-            {
-                DetachNode(node);
-                DisposeNode(node);
-            }
-            Connections.Clear();
-            SelectedConnections.Clear();
-            Nodes.Clear();
-            AddNodeInternal(CreateDefaultTextureSizeNode());
-
-            CurrentProjectPath = null;
-
-            InvalidateGraph(true);
-        }
-
-        private TextureSizeNodeViewModel CreateDefaultTextureSizeNode()
-        {
-            var node =(TextureSizeNodeViewModel)nodeFactory.Create(NodeType.TextureSizeNode);
-            node.Location = new Point(0, 0);
-            return node;
-        }
-
-        private static void DisposeNode(BaseNodeViewModel node)
-        {
-            if (node is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-        }
 
         // Export texture
         private enum TextureExportFormat
@@ -1151,30 +821,6 @@ namespace SmartExchanger.ViewModels
                     roughnessMetallicImage is null
                         ? null
                         : EncodeMaterialPreviewTexture(context, roughnessMetallicImage, _renderingOptions.MaterialPreviewSize);
-
-                //byte[]? baseColorOpacityPng;
-
-                //if (opacityImage is null)
-                //{
-                //    baseColorOpacityPng = baseColorImage is null ? null
-                //            : EncodeMaterialPreviewTexture(
-                //                context,
-                //                baseColorImage,
-                //                _renderingOptions.MaterialPreviewSize);
-                //}
-                //else
-                //{
-                //    baseColorOpacityImage = BuildBaseColorOpacityImage(
-                //            context,
-                //            _renderingOptions.MaterialPreviewSize,
-                //            baseColorImage,
-                //            opacityImage);
-
-                //    baseColorOpacityPng = EncodeMaterialPreviewTexture(
-                //            context,
-                //            baseColorOpacityImage,
-                //            _renderingOptions.MaterialPreviewSize);
-                //}
 
                 byte[]? baseColorOpacityPng = null;
 
