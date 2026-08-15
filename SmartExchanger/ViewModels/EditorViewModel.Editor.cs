@@ -214,15 +214,15 @@ namespace SmartExchanger.ViewModels
         }
 
 
-        private Point? _pendingNodeCreationLocation;
-        public void CaptureNodeCreationLocation(Point graphLocation)
-        {
-            if (!double.IsFinite(graphLocation.X) || !double.IsFinite(graphLocation.Y))
-            {
-                return;
-            }
-            this._pendingNodeCreationLocation = graphLocation;
-        }
+        //private Point? _pendingNodeCreationLocation;
+        //public void CaptureNodeCreationLocation(Point graphLocation)
+        //{
+        //    if (!double.IsFinite(graphLocation.X) || !double.IsFinite(graphLocation.Y))
+        //    {
+        //        return;
+        //    }
+        //    this._pendingNodeCreationLocation = graphLocation;
+        //}
 
 
         [RelayCommand]
@@ -233,8 +233,8 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
-            Point? requestedLocation = _pendingNodeCreationLocation;
-            this._pendingNodeCreationLocation = null;
+            Point? requestedLocation = _graphPointerLocation;
+            //this._pendingNodeCreationLocation = null;
             if (requestedLocation is null)
             {
                 return;
