@@ -92,5 +92,16 @@
 		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 	  </None>
   </ItemGroup>
+	<Target Name="CopyCompiledHelixShadersToPublish"
+			AfterTargets="Publish">
 
+		<ItemGroup>
+			<CompiledHelixShaders Include="$(OutputPath)Shaders\MaterialPreview\Helix\**\*.cso" />
+		</ItemGroup>
+
+		<Copy SourceFiles="@(CompiledHelixShaders)"
+			  DestinationFiles="@(CompiledHelixShaders->'$(PublishDir)Shaders\MaterialPreview\Helix\%(RecursiveDir)%(Filename)%(Extension)')"
+			  SkipUnchangedFiles="true" />
+
+	</Target>
 </Project>

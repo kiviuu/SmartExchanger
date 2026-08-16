@@ -1,0 +1,573 @@
+{
+  "formatVersion": 1,
+  "nodes": [
+    {
+      "id": "3ed74d93-1c99-47c3-9896-9fda1256e919",
+      "typeId": "start.texture-size",
+      "x": -120,
+      "y": -75,
+      "state": {
+        "selectedSize": 2048
+      }
+    },
+    {
+      "id": "a0a42861-4c5d-4dee-9e9a-13fd91241723",
+      "typeId": "start.texture-input",
+      "x": 255,
+      "y": 525,
+      "state": {
+        "filePath": "grass-base.png",
+        "flipVertically": true
+      }
+    },
+    {
+      "id": "7866622c-db32-4bf8-9d7c-8f42f5ef986e",
+      "typeId": "start.texture-input",
+      "x": 2310,
+      "y": 1740,
+      "state": {
+        "filePath": "grass-norm.png",
+        "flipVertically": true
+      }
+    },
+    {
+      "id": "99360a05-8fa5-4e7a-a095-5be040866e98",
+      "typeId": "start.texture-input",
+      "x": 435,
+      "y": 2310,
+      "state": {
+        "filePath": "grass-rough.png",
+        "flipVertically": true
+      }
+    },
+    {
+      "id": "d6bedecc-6adc-4e88-8108-ad54f082a7c5",
+      "typeId": "start.texture-input",
+      "x": 255,
+      "y": 375,
+      "state": {
+        "filePath": "ground-base.png",
+        "flipVertically": true
+      }
+    },
+    {
+      "id": "85549c20-9c71-43b7-a7b9-a7033246617d",
+      "typeId": "start.texture-input",
+      "x": 2310,
+      "y": 1560,
+      "state": {
+        "filePath": "ground-norm.png",
+        "flipVertically": true
+      }
+    },
+    {
+      "id": "0f694ad7-acd4-4476-92c1-cda5df2e5260",
+      "typeId": "start.texture-input",
+      "x": 435,
+      "y": 2145,
+      "state": {
+        "filePath": "ground-rough.png",
+        "flipVertically": true
+      }
+    },
+    {
+      "id": "b85bb278-a3de-44db-a4f6-11e842ce4233",
+      "typeId": "start.texture-input",
+      "x": 255,
+      "y": 990,
+      "state": {
+        "filePath": "rock-base.png",
+        "flipVertically": true
+      }
+    },
+    {
+      "id": "bfadfcba-c1a7-4a95-ada2-7474c5256ebf",
+      "typeId": "start.texture-input",
+      "x": 2310,
+      "y": 2235,
+      "state": {
+        "filePath": "rock-norm.png",
+        "flipVertically": true
+      }
+    },
+    {
+      "id": "7485cf80-20f9-40f1-a50a-0667ac7aaf4b",
+      "typeId": "start.texture-input",
+      "x": 435,
+      "y": 2475,
+      "state": {
+        "filePath": "rock-rough.png",
+        "flipVertically": true
+      }
+    },
+    {
+      "id": "8d1979ad-86d7-4665-a12c-55331a9f5b16",
+      "typeId": "middle.perlin-fractal",
+      "x": 255,
+      "y": 705,
+      "state": {
+        "seed": 25.85,
+        "frequencyX": 0.35,
+        "frequencyY": 0.37,
+        "octaves": 4
+      }
+    },
+    {
+      "id": "55050806-fff5-4a93-961c-9ab51aa554f9",
+      "typeId": "middle.worley-noise",
+      "x": 255,
+      "y": 870,
+      "state": {
+        "scale": 3,
+        "jitter": 0.57,
+        "seed": 38.95
+      }
+    },
+    {
+      "id": "9092647f-702f-4e0d-bff1-3db72159e1a4",
+      "typeId": "middle.blend",
+      "x": 660,
+      "y": 795,
+      "state": {
+        "factor": 0.438,
+        "selectedBlendMode": "SrcOver"
+      }
+    },
+    {
+      "id": "dc3a6c87-4687-4ec5-b2d9-79f63eac2b28",
+      "typeId": "middle.threshold",
+      "x": 1035,
+      "y": 795,
+      "state": {
+        "threshold": 0.6,
+        "softness": 0.1
+      }
+    },
+    {
+      "id": "dabfcfb5-d0a6-43ba-b299-1f983e061152",
+      "typeId": "middle.worley-noise",
+      "x": 255,
+      "y": 1290,
+      "state": {
+        "scale": 9,
+        "jitter": 1,
+        "seed": 57.55
+      }
+    },
+    {
+      "id": "91ee5878-2e12-464d-b627-f7a329e07853",
+      "typeId": "middle.threshold",
+      "x": 1035,
+      "y": 1215,
+      "state": {
+        "threshold": 0.7,
+        "softness": 0
+      }
+    },
+    {
+      "id": "d288b556-f8dc-4dfd-bde8-93d9bef2174f",
+      "typeId": "middle.blend",
+      "x": 1590,
+      "y": 555,
+      "state": {
+        "factor": 0.785,
+        "selectedBlendMode": "SrcOver"
+      }
+    },
+    {
+      "id": "c626139c-8727-4126-b649-3f7c155125c7",
+      "typeId": "middle.blend",
+      "x": 2010,
+      "y": 615,
+      "state": {
+        "factor": 1,
+        "selectedBlendMode": "SrcOver"
+      }
+    },
+    {
+      "id": "c0452969-98c0-4ee0-91b3-570dcaa94849",
+      "typeId": "middle.blend",
+      "x": 3255,
+      "y": 1590,
+      "state": {
+        "factor": 0.745,
+        "selectedBlendMode": "SrcOver"
+      }
+    },
+    {
+      "id": "99f3c2f0-62c2-4bbc-8a85-95c2814b09f0",
+      "typeId": "middle.reroute",
+      "x": 1380,
+      "y": 375,
+      "state": {}
+    },
+    {
+      "id": "5d0d09a1-024f-43da-968c-2883d8291e39",
+      "typeId": "middle.blend",
+      "x": 3660,
+      "y": 1905,
+      "state": {
+        "factor": 1,
+        "selectedBlendMode": "SrcOver"
+      }
+    },
+    {
+      "id": "6d2ab7e7-4471-4cfa-9c92-5aef15007deb",
+      "typeId": "middle.reroute",
+      "x": 2025,
+      "y": 1965,
+      "state": {}
+    },
+    {
+      "id": "da29af64-9ced-4bc8-9250-21ff02e07821",
+      "typeId": "middle.blend",
+      "x": 1635,
+      "y": 2370,
+      "state": {
+        "factor": 0.855,
+        "selectedBlendMode": "SrcOver"
+      }
+    },
+    {
+      "id": "d7fa6172-0b7b-4ec8-b27a-637cae0144b7",
+      "typeId": "middle.reroute",
+      "x": 1410,
+      "y": 2415,
+      "state": {}
+    },
+    {
+      "id": "b710ac12-efd8-47cd-b3d1-5c2fe756399e",
+      "typeId": "end.output",
+      "x": 4545,
+      "y": 1440,
+      "state": {}
+    },
+    {
+      "id": "5f05a8af-567f-4ac2-9ae8-f1ef799477c1",
+      "typeId": "middle.blend",
+      "x": 2220,
+      "y": 2490,
+      "state": {
+        "factor": 1,
+        "selectedBlendMode": "SrcOver"
+      }
+    },
+    {
+      "id": "443dad1a-d825-43e0-8736-f7f41bcdfa70",
+      "typeId": "end.output",
+      "x": 4545,
+      "y": 2010,
+      "state": {}
+    },
+    {
+      "id": "ac725acc-e604-4fd9-8b85-a027aa461ffd",
+      "typeId": "end.output",
+      "x": 4545,
+      "y": 1665,
+      "state": {}
+    },
+    {
+      "id": "78d1af49-dadd-4716-8a3a-57d860c39216",
+      "typeId": "middle.perlin-fractal",
+      "x": 255,
+      "y": 1155,
+      "state": {
+        "seed": 0,
+        "frequencyX": 0.04,
+        "frequencyY": 0.1,
+        "octaves": 3
+      }
+    },
+    {
+      "id": "e8a2547c-a018-4845-bc74-8439d9cc9df9",
+      "typeId": "middle.blend",
+      "x": 675,
+      "y": 1215,
+      "state": {
+        "factor": 0.684,
+        "selectedBlendMode": "SrcOver"
+      }
+    },
+    {
+      "id": "f0b2f80a-f523-4ca0-98c8-51bb40979b83",
+      "typeId": "middle.reroute",
+      "x": 4275,
+      "y": 615,
+      "state": {}
+    },
+    {
+      "id": "d29bed09-fe39-4e1b-b559-4ad27e90c24a",
+      "typeId": "middle.reroute",
+      "x": 4290,
+      "y": 2490,
+      "state": {}
+    },
+    {
+      "id": "5fb1ca02-a6cd-448b-a576-6d54299ac7b0",
+      "typeId": "end.material-output",
+      "x": 4545,
+      "y": 1875,
+      "state": {}
+    },
+    {
+      "id": "4bd78893-ad13-4c75-8ef7-cc0dd7650181",
+      "typeId": "end.texture-preview",
+      "x": 4680,
+      "y": 1110,
+      "state": {}
+    },
+    {
+      "id": "6365c639-bb41-4f2c-8b1d-3632d5fd354f",
+      "typeId": "middle.threshold",
+      "x": 3825,
+      "y": 1695,
+      "state": {
+        "threshold": 0.6,
+        "softness": 0
+      }
+    },
+    {
+      "id": "ee2b369e-7bad-47a0-9462-53bfa0f7724a",
+      "typeId": "end.output",
+      "x": 1065,
+      "y": 570,
+      "state": {}
+    }
+  ],
+  "connections": [
+    {
+      "sourceNodeId": "8d1979ad-86d7-4665-a12c-55331a9f5b16",
+      "sourcePortId": "out",
+      "targetNodeId": "9092647f-702f-4e0d-bff1-3db72159e1a4",
+      "targetPortId": "textureAIn"
+    },
+    {
+      "sourceNodeId": "55050806-fff5-4a93-961c-9ab51aa554f9",
+      "sourcePortId": "out",
+      "targetNodeId": "9092647f-702f-4e0d-bff1-3db72159e1a4",
+      "targetPortId": "textureBIn"
+    },
+    {
+      "sourceNodeId": "9092647f-702f-4e0d-bff1-3db72159e1a4",
+      "sourcePortId": "out",
+      "targetNodeId": "dc3a6c87-4687-4ec5-b2d9-79f63eac2b28",
+      "targetPortId": "textureIn"
+    },
+    {
+      "sourceNodeId": "dc3a6c87-4687-4ec5-b2d9-79f63eac2b28",
+      "sourcePortId": "out",
+      "targetNodeId": "d288b556-f8dc-4dfd-bde8-93d9bef2174f",
+      "targetPortId": "maskIn"
+    },
+    {
+      "sourceNodeId": "a0a42861-4c5d-4dee-9e9a-13fd91241723",
+      "sourcePortId": "out",
+      "targetNodeId": "d288b556-f8dc-4dfd-bde8-93d9bef2174f",
+      "targetPortId": "textureBIn"
+    },
+    {
+      "sourceNodeId": "d288b556-f8dc-4dfd-bde8-93d9bef2174f",
+      "sourcePortId": "out",
+      "targetNodeId": "c626139c-8727-4126-b649-3f7c155125c7",
+      "targetPortId": "textureAIn"
+    },
+    {
+      "sourceNodeId": "b85bb278-a3de-44db-a4f6-11e842ce4233",
+      "sourcePortId": "out",
+      "targetNodeId": "c626139c-8727-4126-b649-3f7c155125c7",
+      "targetPortId": "textureBIn"
+    },
+    {
+      "sourceNodeId": "85549c20-9c71-43b7-a7b9-a7033246617d",
+      "sourcePortId": "out",
+      "targetNodeId": "c0452969-98c0-4ee0-91b3-570dcaa94849",
+      "targetPortId": "textureAIn"
+    },
+    {
+      "sourceNodeId": "7866622c-db32-4bf8-9d7c-8f42f5ef986e",
+      "sourcePortId": "out",
+      "targetNodeId": "c0452969-98c0-4ee0-91b3-570dcaa94849",
+      "targetPortId": "textureBIn"
+    },
+    {
+      "sourceNodeId": "d6bedecc-6adc-4e88-8108-ad54f082a7c5",
+      "sourcePortId": "out",
+      "targetNodeId": "99f3c2f0-62c2-4bbc-8a85-95c2814b09f0",
+      "targetPortId": "in"
+    },
+    {
+      "sourceNodeId": "99f3c2f0-62c2-4bbc-8a85-95c2814b09f0",
+      "sourcePortId": "out",
+      "targetNodeId": "d288b556-f8dc-4dfd-bde8-93d9bef2174f",
+      "targetPortId": "textureAIn"
+    },
+    {
+      "sourceNodeId": "bfadfcba-c1a7-4a95-ada2-7474c5256ebf",
+      "sourcePortId": "out",
+      "targetNodeId": "5d0d09a1-024f-43da-968c-2883d8291e39",
+      "targetPortId": "textureBIn"
+    },
+    {
+      "sourceNodeId": "c0452969-98c0-4ee0-91b3-570dcaa94849",
+      "sourcePortId": "out",
+      "targetNodeId": "5d0d09a1-024f-43da-968c-2883d8291e39",
+      "targetPortId": "textureAIn"
+    },
+    {
+      "sourceNodeId": "dc3a6c87-4687-4ec5-b2d9-79f63eac2b28",
+      "sourcePortId": "out",
+      "targetNodeId": "c0452969-98c0-4ee0-91b3-570dcaa94849",
+      "targetPortId": "maskIn"
+    },
+    {
+      "sourceNodeId": "6d2ab7e7-4471-4cfa-9c92-5aef15007deb",
+      "sourcePortId": "out",
+      "targetNodeId": "5d0d09a1-024f-43da-968c-2883d8291e39",
+      "targetPortId": "maskIn"
+    },
+    {
+      "sourceNodeId": "0f694ad7-acd4-4476-92c1-cda5df2e5260",
+      "sourcePortId": "out",
+      "targetNodeId": "da29af64-9ced-4bc8-9250-21ff02e07821",
+      "targetPortId": "textureAIn"
+    },
+    {
+      "sourceNodeId": "99360a05-8fa5-4e7a-a095-5be040866e98",
+      "sourcePortId": "out",
+      "targetNodeId": "da29af64-9ced-4bc8-9250-21ff02e07821",
+      "targetPortId": "textureBIn"
+    },
+    {
+      "sourceNodeId": "dc3a6c87-4687-4ec5-b2d9-79f63eac2b28",
+      "sourcePortId": "out",
+      "targetNodeId": "d7fa6172-0b7b-4ec8-b27a-637cae0144b7",
+      "targetPortId": "in"
+    },
+    {
+      "sourceNodeId": "d7fa6172-0b7b-4ec8-b27a-637cae0144b7",
+      "sourcePortId": "out",
+      "targetNodeId": "da29af64-9ced-4bc8-9250-21ff02e07821",
+      "targetPortId": "maskIn"
+    },
+    {
+      "sourceNodeId": "da29af64-9ced-4bc8-9250-21ff02e07821",
+      "sourcePortId": "out",
+      "targetNodeId": "5f05a8af-567f-4ac2-9ae8-f1ef799477c1",
+      "targetPortId": "textureAIn"
+    },
+    {
+      "sourceNodeId": "7485cf80-20f9-40f1-a50a-0667ac7aaf4b",
+      "sourcePortId": "out",
+      "targetNodeId": "5f05a8af-567f-4ac2-9ae8-f1ef799477c1",
+      "targetPortId": "textureBIn"
+    },
+    {
+      "sourceNodeId": "6d2ab7e7-4471-4cfa-9c92-5aef15007deb",
+      "sourcePortId": "out",
+      "targetNodeId": "5f05a8af-567f-4ac2-9ae8-f1ef799477c1",
+      "targetPortId": "maskIn"
+    },
+    {
+      "sourceNodeId": "5d0d09a1-024f-43da-968c-2883d8291e39",
+      "sourcePortId": "out",
+      "targetNodeId": "ac725acc-e604-4fd9-8b85-a027aa461ffd",
+      "targetPortId": "textureIn"
+    },
+    {
+      "sourceNodeId": "78d1af49-dadd-4716-8a3a-57d860c39216",
+      "sourcePortId": "out",
+      "targetNodeId": "e8a2547c-a018-4845-bc74-8439d9cc9df9",
+      "targetPortId": "textureAIn"
+    },
+    {
+      "sourceNodeId": "dabfcfb5-d0a6-43ba-b299-1f983e061152",
+      "sourcePortId": "out",
+      "targetNodeId": "e8a2547c-a018-4845-bc74-8439d9cc9df9",
+      "targetPortId": "textureBIn"
+    },
+    {
+      "sourceNodeId": "e8a2547c-a018-4845-bc74-8439d9cc9df9",
+      "sourcePortId": "out",
+      "targetNodeId": "91ee5878-2e12-464d-b627-f7a329e07853",
+      "targetPortId": "textureIn"
+    },
+    {
+      "sourceNodeId": "91ee5878-2e12-464d-b627-f7a329e07853",
+      "sourcePortId": "out",
+      "targetNodeId": "c626139c-8727-4126-b649-3f7c155125c7",
+      "targetPortId": "maskIn"
+    },
+    {
+      "sourceNodeId": "91ee5878-2e12-464d-b627-f7a329e07853",
+      "sourcePortId": "out",
+      "targetNodeId": "6d2ab7e7-4471-4cfa-9c92-5aef15007deb",
+      "targetPortId": "in"
+    },
+    {
+      "sourceNodeId": "c626139c-8727-4126-b649-3f7c155125c7",
+      "sourcePortId": "out",
+      "targetNodeId": "f0b2f80a-f523-4ca0-98c8-51bb40979b83",
+      "targetPortId": "in"
+    },
+    {
+      "sourceNodeId": "f0b2f80a-f523-4ca0-98c8-51bb40979b83",
+      "sourcePortId": "out",
+      "targetNodeId": "b710ac12-efd8-47cd-b3d1-5c2fe756399e",
+      "targetPortId": "textureIn"
+    },
+    {
+      "sourceNodeId": "5f05a8af-567f-4ac2-9ae8-f1ef799477c1",
+      "sourcePortId": "out",
+      "targetNodeId": "d29bed09-fe39-4e1b-b559-4ad27e90c24a",
+      "targetPortId": "in"
+    },
+    {
+      "sourceNodeId": "d29bed09-fe39-4e1b-b559-4ad27e90c24a",
+      "sourcePortId": "out",
+      "targetNodeId": "443dad1a-d825-43e0-8736-f7f41bcdfa70",
+      "targetPortId": "textureIn"
+    },
+    {
+      "sourceNodeId": "f0b2f80a-f523-4ca0-98c8-51bb40979b83",
+      "sourcePortId": "out",
+      "targetNodeId": "5fb1ca02-a6cd-448b-a576-6d54299ac7b0",
+      "targetPortId": "baseColor"
+    },
+    {
+      "sourceNodeId": "5d0d09a1-024f-43da-968c-2883d8291e39",
+      "sourcePortId": "out",
+      "targetNodeId": "5fb1ca02-a6cd-448b-a576-6d54299ac7b0",
+      "targetPortId": "normal"
+    },
+    {
+      "sourceNodeId": "d29bed09-fe39-4e1b-b559-4ad27e90c24a",
+      "sourcePortId": "out",
+      "targetNodeId": "5fb1ca02-a6cd-448b-a576-6d54299ac7b0",
+      "targetPortId": "roughness"
+    },
+    {
+      "sourceNodeId": "f0b2f80a-f523-4ca0-98c8-51bb40979b83",
+      "sourcePortId": "out",
+      "targetNodeId": "6365c639-bb41-4f2c-8b1d-3632d5fd354f",
+      "targetPortId": "textureIn"
+    },
+    {
+      "sourceNodeId": "6365c639-bb41-4f2c-8b1d-3632d5fd354f",
+      "sourcePortId": "out",
+      "targetNodeId": "4bd78893-ad13-4c75-8ef7-cc0dd7650181",
+      "targetPortId": "textureIn"
+    },
+    {
+      "sourceNodeId": "6365c639-bb41-4f2c-8b1d-3632d5fd354f",
+      "sourcePortId": "out",
+      "targetNodeId": "5fb1ca02-a6cd-448b-a576-6d54299ac7b0",
+      "targetPortId": "metallic"
+    },
+    {
+      "sourceNodeId": "9092647f-702f-4e0d-bff1-3db72159e1a4",
+      "sourcePortId": "out",
+      "targetNodeId": "ee2b369e-7bad-47a0-9462-53bfa0f7724a",
+      "targetPortId": "textureIn"
+    }
+  ]
+}
