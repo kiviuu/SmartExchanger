@@ -47,6 +47,12 @@ namespace SmartExchanger.Configuration
                 .Validate(options => options.JpegQuality is >= 1 and <= 100, "JPEG quality must be between 1 and 100.")
                 .ValidateOnStart();
 
+            services.AddOptions<UndoRedoOptions>()
+                .Bind(configuration.GetRequiredSection(UndoRedoOptions.SectionName))
+                .Validate(options => options.Capacity is >= 1 and <= 500, "Capacity must be between 1 and 500.")
+                .Validate(options => options.CommitDelayMilliseconds is >= 0 and <= 5000, "Commit delay must be between 0 and 5000 milliseconds.")
+                .ValidateOnStart();
+
             return services;
         }
 

@@ -1,7 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using SmartExchanger.Models;
 
 namespace SmartExchanger.ViewModels
 {
@@ -14,22 +12,34 @@ namespace SmartExchanger.ViewModels
 
         private void AddNodeInternal(BaseNodeViewModel node)
         {
-            Action handler = () => OnNodePropertiesChanged(node);
-            _nodePropertyHandlers.Add(node, handler);
-            node.PropsChanged += handler;
+            ArgumentNullException.ThrowIfNull(node);
+            Action renderStateHandler = () => OnNodePropertiesChanged(node);
+
+            _nodePropertyHandlers.Add(node, renderStateHandler);
+            node.PropsChanged += renderStateHandler;
+
+            TrackNodeForHistory(node);
             Nodes.Add(node);
         }
 
         private void DetachNode(BaseNodeViewModel node)
         {
-            if (_nodePropertyHandlers.Remove(node, out var handler))
+            if (_nodePropertyHandlers.Remove(node,out Action? renderStateHandler))
             {
-                node.PropsChanged -= handler;
+                node.PropsChanged -= renderStateHandler;
             }
+
+            UntrackNodeFromHistory(node);
         }
 
         private void OnNodePropertiesChanged(BaseNodeViewModel node)
         {
+            HandleNodeStateChangedForHistory(node);
+
+            if (IsHistoryReplay)
+            {
+                return;
+            }
             InvalidateGraph(requestGpuPurge: node is TextureSizeNodeViewModel);
         }
 
@@ -83,6 +93,8 @@ namespace SmartExchanger.ViewModels
                 }
 
                 var previous = Connections.FirstOrDefault(c => c.Target == targetConnector);
+
+                EditorHistorySnapshot historyBefore = CaptureBeforeGraphMutation();
                 if (previous is not null)
                 {
                     RemoveConnectionInternal(previous);
@@ -90,6 +102,8 @@ namespace SmartExchanger.ViewModels
 
                 Connections.Add(new ConnectionViewModel(sourceConnector, targetConnector));
                 InvalidateGraph(requestGpuPurge: true);
+
+                CommitGraphMutation(previous is null ? "Create connection" : "Replace connection", historyBefore);
             }
             finally
             {
@@ -114,12 +128,16 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
+            EditorHistorySnapshot historyBefore = CaptureBeforeGraphMutation();
+
             foreach (var connection in toRemove)
             {
                 RemoveConnectionInternal(connection);
             }
 
             InvalidateGraph(requestGpuPurge: true);
+
+            CommitGraphMutation(toRemove.Count == 1 ? "Disconnect connector" : $"Disconnect {toRemove.Count} connections", historyBefore);
         }
 
         [RelayCommand]
@@ -135,9 +153,11 @@ namespace SmartExchanger.ViewModels
                 SelectedConnections.Remove(connection);
                 return;
             }
+            EditorHistorySnapshot historyBefore = CaptureBeforeGraphMutation();
 
             RemoveConnectionInternal(connection);
             InvalidateGraph(requestGpuPurge: true);
+            CommitGraphMutation("Remove connection", historyBefore);
         }
 
         private void RemoveConnectionInternal(ConnectionViewModel connection)
@@ -179,15 +199,16 @@ namespace SmartExchanger.ViewModels
 
             List<ConnectionViewModel> selectedConnections = SelectedConnections.ToList();
 
-            List<BaseNodeViewModel> selectedNodes =SelectedNodes.Where(node => node is not TextureSizeNodeViewModel).ToList();
+            List<BaseNodeViewModel> selectedNodes = SelectedNodes.Where(node => node is not TextureSizeNodeViewModel).ToList();
 
+            if (selectedConnections.Count == 0 && selectedNodes.Count == 0)
+            {
+                return;
+            }
+
+            EditorHistorySnapshot historyBefore = CaptureBeforeGraphMutation();
             bool graphChanged = false;
 
-            /*
-             * Remove explicitly selected connections first.
-             * Connections attached to selected nodes will be removed
-             * by RemoveNodesInternal.
-             */
             foreach (ConnectionViewModel connection in selectedConnections)
             {
                 if (!Connections.Contains(connection))
@@ -207,10 +228,22 @@ namespace SmartExchanger.ViewModels
             SelectedConnections.Clear();
             SelectedNodes.Clear();
 
-            if (graphChanged)
+            if (!graphChanged)
             {
-                InvalidateGraph(requestGpuPurge: true);
+                return;
             }
+
+            InvalidateGraph(requestGpuPurge: true);
+
+            CommitGraphMutation(
+                selectedNodes.Count > 0
+                    ? selectedNodes.Count == 1
+                        ? "Delete node"
+                        : $"Delete {selectedNodes.Count} nodes"
+                    : selectedConnections.Count == 1
+                        ? "Delete connection"
+                        : $"Delete {selectedConnections.Count} connections",
+                historyBefore);
         }
 
 
@@ -255,12 +288,19 @@ namespace SmartExchanger.ViewModels
             {
                 return;
             }
+            EditorHistorySnapshot historyBefore = CaptureBeforeGraphMutation();
 
             BaseNodeViewModel newNode = nodeFactory.Create(nodeType);
 
             newNode.Location = requestedLocation.Value;
             AddNodeInternal(newNode);
+            SelectedConnections.Clear();
+            SelectedNodes.Clear();
+            SelectedNodes.Add(newNode);
+
             InvalidateGraph(requestGpuPurge: false);
+
+            CommitGraphMutation($"Create {newNode.Title}", historyBefore);
         }
 
         [RelayCommand]
@@ -270,48 +310,54 @@ namespace SmartExchanger.ViewModels
             {
                 return;
             }
+            string nodeTitle = node.Title;
 
+            EditorHistorySnapshot historyBefore = CaptureBeforeGraphMutation();
             bool graphChanged = RemoveNodesInternal(new[] { node });
 
-            if (graphChanged)
+            if (!graphChanged)
             {
-                InvalidateGraph(requestGpuPurge: true);
+                return;
             }
+            InvalidateGraph(requestGpuPurge: true);
+
+            CommitGraphMutation($"Delete {nodeTitle}", historyBefore);
         }
 
         [RelayCommand]
         private void ClearWorkspace()
         {
-            var result = System.Windows.MessageBox.Show("Are you sure you want to clear the workspace? This process cannot be undone!",
+            var result = System.Windows.MessageBox.Show("Are you sure you want to clear the workspace? This process can be undone.",
                 "Clear workspace", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result != MessageBoxResult.Yes)
+            if (result != MessageBoxResult.Yes || _isDisposed)
             {
                 return;
             }
 
-            if (_isDisposed)
-            {
-                return;
-            }
+            EditorHistorySnapshot historyBefore = CaptureBeforeGraphMutation();
+
             _pendingSourceConnector = null;
-            foreach (var node in Nodes.OfType<OutputNodeViewModel>())
+
+            foreach (OutputNodeViewModel outputNode in Nodes.OfType<OutputNodeViewModel>())
             {
-                node.ClearPreview();
+                outputNode.ClearPreview();
             }
-            foreach (var node in Nodes.ToList())
+
+            foreach (BaseNodeViewModel node in Nodes.ToList())
             {
                 DetachNode(node);
                 DisposeNode(node);
             }
+
             Connections.Clear();
             SelectedConnections.Clear();
             SelectedNodes.Clear();
             Nodes.Clear();
+
             AddNodeInternal(CreateDefaultTextureSizeNode());
-
             CurrentProjectPath = null;
-
-            InvalidateGraph(true);
+            InvalidateGraph(requestGpuPurge: true);
+            CommitGraphMutation("Clear workspace", historyBefore);
         }
 
         private TextureSizeNodeViewModel CreateDefaultTextureSizeNode()

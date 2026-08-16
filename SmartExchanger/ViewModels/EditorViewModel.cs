@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 using SkiaSharp;
@@ -12,12 +11,12 @@ using SmartExchanger.Services.Graphics;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Packaging;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Windows.UI.WebUI;
+using SmartExchanger.History;
+using System.Windows.Threading;
 
 namespace SmartExchanger.ViewModels
 {
@@ -73,8 +72,8 @@ namespace SmartExchanger.ViewModels
         private bool _isDisposed;
 
         public EditorViewModel(IShaderService shaderService, INodeFactory nodeFactory, IGraphPersistenceService graphPersistenceService,
-            IOptions<RenderingOptions> renderingOptions, IOptions<ExportOptions> exportOptions, ISkiaGpuRenderHost gpuRenderHost,
-            INodeStateSerializer nodeStateSerializer)
+            IOptions<RenderingOptions> renderingOptions, IOptions<ExportOptions> exportOptions, IOptions<UndoRedoOptions> undoRedoOptions,
+            ISkiaGpuRenderHost gpuRenderHost ,INodeStateSerializer nodeStateSerializer)
         {
             this.shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
             this.nodeFactory = nodeFactory ?? throw new ArgumentNullException(nameof(nodeFactory));
@@ -84,11 +83,24 @@ namespace SmartExchanger.ViewModels
             this._gpuRenderHost = gpuRenderHost ?? throw new ArgumentNullException(nameof(gpuRenderHost));
             ArgumentNullException.ThrowIfNull(renderingOptions);
             ArgumentNullException.ThrowIfNull(exportOptions);
+            ArgumentNullException.ThrowIfNull(undoRedoOptions);
             this._renderingOptions = renderingOptions.Value;
             this._exportOptions = exportOptions.Value;
 
             this._minimumGpuCacheBytes = checked((long)_renderingOptions.MinimumGpuCacheMb * 1024L * 1024L);
             this._maximumGpuCacheBytes = checked((long)_renderingOptions.MaximumGpuCacheMb * 1024L * 1024L);
+
+            UndoRedoOptions historyOptions = undoRedoOptions.Value;
+
+            _undoRedoManager = new UndoRedoManager(historyOptions.Capacity);
+
+            _undoRedoManager.StateChanged += OnUndoRedoManagerStateChanged;
+
+            _historyCommitTimer = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromMilliseconds(historyOptions.CommitDelayMilliseconds)
+            };
+            this._historyCommitTimer.Tick += OnHistoryCommitTimerTick;
 
             SelectedNodes.CollectionChanged += OnSelectedNodesChanged;
 
@@ -552,6 +564,8 @@ namespace SmartExchanger.ViewModels
             }
 
             _isDisposed = true;
+            SelectedNodes.CollectionChanged -= OnSelectedNodesChanged;
+            DisposeUndoRedoHistory();
             _gpuRenderHost.SetRenderCallback(null);
             _pendingSourceConnector = null;
             _requestGpuRender = null;

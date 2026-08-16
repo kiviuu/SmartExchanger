@@ -109,9 +109,13 @@ namespace SmartExchanger.ViewModels
             {
                 GraphLoadResult loadedGraph = await graphPersistenceService.LoadAsync(fileDialog.FileName);
 
-                ReplaceGraph(loadedGraph);
+                string openedProjectPath = Path.GetFullPath(fileDialog.FileName);
 
-                CurrentProjectPath = Path.GetFullPath(fileDialog.FileName);
+                ResetUndoRedoHistory();
+
+                CurrentProjectPath = openedProjectPath;
+
+                ReplaceGraphCore(loadedGraph);
 
                 if (loadedGraph.Warnings.Count > 0)
                 {
@@ -141,6 +145,7 @@ namespace SmartExchanger.ViewModels
         {
             try
             {
+                FlushPendingHistory();
                 await graphPersistenceService.SaveAsync(filePath, Nodes, Connections);
 
                 CurrentProjectPath = Path.GetFullPath(filePath);
@@ -156,7 +161,7 @@ namespace SmartExchanger.ViewModels
             }
         }
 
-        private void ReplaceGraph(GraphLoadResult loadedGraph)
+        private void ReplaceGraphCore(GraphLoadResult loadedGraph)
         {
             ArgumentNullException.ThrowIfNull(loadedGraph);
 
@@ -178,7 +183,7 @@ namespace SmartExchanger.ViewModels
             SelectedNodes.Clear();
             Nodes.Clear();
 
-            foreach (BaseNodeViewModel node in loadedGraph.Nodes)
+            foreach ( BaseNodeViewModel node in loadedGraph.Nodes)
             {
                 AddNodeInternal(node);
             }

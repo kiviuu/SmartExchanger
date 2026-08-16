@@ -47,6 +47,18 @@
                          Background="#151515"
                          Tag="{Binding}">
                 <nodify:NodifyEditor.InputBindings>
+                    <KeyBinding Key="Z"
+                            Modifiers="Control"
+                            Command="{Binding UndoCommand}" />
+
+                    <KeyBinding Key="Y"
+                                Modifiers="Control"
+                                Command="{Binding RedoCommand}" />
+
+                    <KeyBinding Key="Z"
+                                Modifiers="Control+Shift"
+                                Command="{Binding RedoCommand}" />
+                    
                     <KeyBinding Key="C" 
                                 Modifiers="Control"
                                 Command="{Binding CopySelectionCommand}" />
@@ -96,6 +108,16 @@
                         <MenuItem Header="Save project as..."
                                   Command="{Binding SaveProjectAsCommand}"
                                   InputGestureText="Ctrl+Shift+S" />
+
+                        <Separator />
+
+                        <MenuItem Header="{Binding UndoMenuHeader}"
+                                  Command="{Binding UndoCommand}"
+                                  InputGestureText="Ctrl+Z" />
+
+                        <MenuItem Header="{Binding RedoMenuHeader}"
+                                  Command="{Binding RedoCommand}"
+                                  InputGestureText="Ctrl+Y" />
 
                         <Separator />
 

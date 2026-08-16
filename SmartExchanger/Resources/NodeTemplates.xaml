@@ -5,6 +5,15 @@
 
     <ContextMenu x:Key="NodeContextMenu"
                  x:Shared="False">
+        <MenuItem Header="{Binding PlacementTarget.Tag.UndoMenuHeader, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  InputGestureText="Ctrl+Z"
+                  Command="{Binding PlacementTarget.Tag.UndoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+        <MenuItem Header="{Binding PlacementTarget.Tag.RedoMenuHeader, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  InputGestureText="Ctrl+Y"
+                  Command="{Binding PlacementTarget.Tag.RedoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+
+        <Separator />
 
         <MenuItem Header="Copy"
                   InputGestureText="Ctrl+C"

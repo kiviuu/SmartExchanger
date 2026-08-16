@@ -27,7 +27,8 @@ namespace SmartExchanger.Services
             string projectDirectory = Path.GetDirectoryName(fullFilePath) ?? throw new InvalidOperationException("The project path does not contain a directory.");
 
             Directory.CreateDirectory(projectDirectory);
-            GraphDocument document = CreateDocument(nodes, connections, projectDirectory);
+            //GraphDocument document = CreateDocument(nodes, connections, projectDirectory);
+            GraphDocument document = CaptureDocument(nodes, connections, projectDirectory);
 
             string temporaryFilePath = fullFilePath + ".tmp";
 
@@ -76,86 +77,86 @@ namespace SmartExchanger.Services
                 throw new InvalidDataException("The selected file does not contain a valid SmartExchanger project.", ex);
             }
 
-            ValidateDocument(document);
+            return RestoreDocument(document, projectDirectory);
 
-            var createdNodes = new List<BaseNodeViewModel>(document.Nodes.Count);
-            var createdConnections = new List<ConnectionViewModel>(document.Connections.Count);
-            var warnings = new List<string>();
+            //try
+            //{
+            //    var nodesById = new Dictionary<Guid, BaseNodeViewModel>();
 
-            try
-            {
-                var nodesById = new Dictionary<Guid, BaseNodeViewModel>();
+            //    foreach (NodeDocument nodeDocument in document.Nodes)
+            //    {
+            //        BaseNodeViewModel node = _nodeFactory.Create(nodeDocument.TypeId);
+            //        node.Id = nodeDocument.Id;
+            //        node.Location = new Point(nodeDocument.X, nodeDocument.Y);
+            //        _nodeStateSerializer.RestoreState(node, nodeDocument.State, projectDirectory, warnings);
+            //        createdNodes.Add(node);
+            //        nodesById.Add(node.Id, node);
+            //    }
 
-                foreach (NodeDocument nodeDocument in document.Nodes)
-                {
-                    BaseNodeViewModel node = _nodeFactory.Create(nodeDocument.TypeId);
-                    node.Id = nodeDocument.Id;
-                    node.Location = new Point(nodeDocument.X, nodeDocument.Y);
-                    _nodeStateSerializer.RestoreState(node, nodeDocument.State, projectDirectory, warnings);
-                    createdNodes.Add(node);
-                    nodesById.Add(node.Id, node);
-                }
+            //    ValidateSingletonNodes(createdNodes);
 
-                ValidateSingletonNodes(createdNodes);
+            //    var connectedTargets = new HashSet<ConnectorViewModel>();
 
-                var connectedTargets = new HashSet<ConnectorViewModel>();
+            //    var connectionKeys = new HashSet<string>(StringComparer.Ordinal);
 
-                var connectionKeys = new HashSet<string>(StringComparer.Ordinal);
+            //    foreach (ConnectionDocument connectionDocument in document.Connections)
+            //    {
+            //        BaseNodeViewModel sourceNode = GetNode(nodesById, connectionDocument.SourceNodeId, "source");
 
-                foreach (ConnectionDocument connectionDocument in document.Connections)
-                {
-                    BaseNodeViewModel sourceNode = GetNode(nodesById, connectionDocument.SourceNodeId, "source");
+            //        BaseNodeViewModel targetNode = GetNode(nodesById, connectionDocument.TargetNodeId, "target");
 
-                    BaseNodeViewModel targetNode = GetNode(nodesById, connectionDocument.TargetNodeId, "target");
+            //        ConnectorViewModel sourceConnector = GetConnector(sourceNode.Outputs, connectionDocument.SourcePortId, sourceNode,  "output");
 
-                    ConnectorViewModel sourceConnector = GetConnector(sourceNode.Outputs, connectionDocument.SourcePortId, sourceNode,  "output");
+            //        ConnectorViewModel targetConnector = GetConnector(targetNode.Inputs, connectionDocument.TargetPortId, targetNode, "input");
 
-                    ConnectorViewModel targetConnector = GetConnector(targetNode.Inputs, connectionDocument.TargetPortId, targetNode, "input");
+            //        if (sourceNode == targetNode)
+            //        {
+            //            throw new InvalidDataException($"Node '{sourceNode.Id}' is connected to itself.");
+            //        }
 
-                    if (sourceNode == targetNode)
-                    {
-                        throw new InvalidDataException($"Node '{sourceNode.Id}' is connected to itself.");
-                    }
+            //        if (!connectedTargets.Add(targetConnector))
+            //        {
+            //            throw new InvalidDataException($"Input port '{targetConnector.Id}' of node '{targetNode.Id}' contains more than one connection.");
+            //        }
 
-                    if (!connectedTargets.Add(targetConnector))
-                    {
-                        throw new InvalidDataException($"Input port '{targetConnector.Id}' of node '{targetNode.Id}' contains more than one connection.");
-                    }
+            //        string connectionKey =
+            //            $"{sourceNode.Id:N}:" +
+            //            $"{sourceConnector.Id}>" +
+            //            $"{targetNode.Id:N}:" +
+            //            $"{targetConnector.Id}";
 
-                    string connectionKey =
-                        $"{sourceNode.Id:N}:" +
-                        $"{sourceConnector.Id}>" +
-                        $"{targetNode.Id:N}:" +
-                        $"{targetConnector.Id}";
+            //        if (!connectionKeys.Add(connectionKey))
+            //        {
+            //            throw new InvalidDataException("The project contains a duplicated connection.");
+            //        }
 
-                    if (!connectionKeys.Add(connectionKey))
-                    {
-                        throw new InvalidDataException("The project contains a duplicated connection.");
-                    }
+            //        createdConnections.Add(new ConnectionViewModel(sourceConnector, targetConnector));
+            //    }
 
-                    createdConnections.Add(new ConnectionViewModel(sourceConnector, targetConnector));
-                }
+            //    EnsureGraphIsAcyclic(createdNodes, createdConnections);
 
-                EnsureGraphIsAcyclic(createdNodes, createdConnections);
-
-                return new GraphLoadResult(createdNodes, createdConnections, warnings);
-            }
-            catch
-            {
-                foreach (BaseNodeViewModel node in createdNodes)
-                {
-                    if (node is IDisposable disposable)
-                    {
-                        disposable.Dispose();
-                    }
-                }
-                throw;
-            }
+            //    return new GraphLoadResult(createdNodes, createdConnections, warnings);
+            //}
+            //catch
+            //{
+            //    foreach (BaseNodeViewModel node in createdNodes)
+            //    {
+            //        if (node is IDisposable disposable)
+            //        {
+            //            disposable.Dispose();
+            //        }
+            //    }
+            //    throw;
+            //}
         }
 
-        private GraphDocument CreateDocument(IReadOnlyCollection<BaseNodeViewModel> nodes, IReadOnlyCollection<ConnectionViewModel> connections,
+        public GraphDocument CaptureDocument(IReadOnlyCollection<BaseNodeViewModel> nodes, IReadOnlyCollection<ConnectionViewModel> connections,
             string projectDirectory)
         {
+            ArgumentNullException.ThrowIfNull(nodes);
+            ArgumentNullException.ThrowIfNull(connections);
+            ArgumentException.ThrowIfNullOrWhiteSpace(projectDirectory);
+
             var nodeDocuments = nodes.Select(
                         node =>
                             new NodeDocument
@@ -334,6 +335,76 @@ namespace SmartExchanger.Services
             }
 
             states[nodeId] = VisitState.Visited;
+        }
+
+
+        public GraphLoadResult RestoreDocument(GraphDocument document, string projectDirectory)
+        {
+            ArgumentNullException.ThrowIfNull(document);
+            ArgumentException.ThrowIfNullOrWhiteSpace(projectDirectory);
+            ValidateDocument(document);
+
+            var createdNodes = new List<BaseNodeViewModel>(document.Connections.Count);
+            var createdConnections = new List<ConnectionViewModel>(document.Connections.Count);
+            var warnings = new List<string>();
+
+            try
+            {
+                var nodesById = new Dictionary<Guid, BaseNodeViewModel>();
+                foreach(var nodeDocument in document.Nodes)
+                {
+                    var node = _nodeFactory.Create(nodeDocument.TypeId);
+                    node.Id = nodeDocument.Id;
+                    node.Location = new Point(nodeDocument.X, nodeDocument.Y);
+                    _nodeStateSerializer.RestoreState(node, nodeDocument.State, projectDirectory, warnings);
+                    createdNodes.Add(node);
+                    nodesById.Add(node.Id, node);
+                }
+
+                ValidateSingletonNodes(createdNodes);
+                var connectedTargets = new HashSet<ConnectorViewModel>();
+                var connectionKeys = new HashSet<string>(StringComparer.Ordinal);
+
+                foreach (var connectionDocument in document.Connections)
+                {
+                    var srcNode = GetNode(nodesById, connectionDocument.SourceNodeId, "source");
+                    var tgtNode = GetNode(nodesById, connectionDocument.TargetNodeId, "target");
+                    var srcConnector = GetConnector(srcNode.Outputs, connectionDocument.SourcePortId, srcNode, "output");
+                    var tgtConnector = GetConnector(tgtNode.Inputs, connectionDocument.TargetPortId, tgtNode, "input");
+
+                    if (srcNode == tgtNode)
+                    {
+                        throw new InvalidDataException($"Node '{srcNode.Id}' is connected to itself.");
+                    }
+                    if (!connectedTargets.Add(tgtConnector))
+                    {
+                        throw new InvalidDataException($"Input port '{tgtConnector.Id}' of node '{tgtNode.Id}' contains more than one connection.");
+                    }
+                    string connectionKey = $"{srcNode.Id:N}:{srcConnector.Id}>{tgtNode.Id:N}:{tgtConnector.Id}";
+
+                    if (!connectionKeys.Add(connectionKey))
+                    {
+                        throw new InvalidDataException("The project contains a duplicated connection.");
+                    }
+
+                    createdConnections.Add(new ConnectionViewModel(srcConnector, tgtConnector));
+                }
+
+                EnsureGraphIsAcyclic(createdNodes, createdConnections);
+                return new GraphLoadResult(createdNodes, createdConnections, warnings);
+            }
+            catch
+            {
+                foreach (var node in createdNodes)
+                {
+                    if (node is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                }
+                throw;
+            }
+
         }
 
         private enum VisitState

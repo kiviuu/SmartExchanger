@@ -80,15 +80,20 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
+            EditorHistorySnapshot historyBefore = CaptureBeforeGraphMutation();
             bool graphChanged = RemoveNodesInternal(copiedNodes);
 
             SelectedNodes.Clear();
             SelectedConnections.Clear();
 
-            if (graphChanged)
+            if (!graphChanged)
             {
-                InvalidateGraph(requestGpuPurge: true);
+                return;
             }
+
+            InvalidateGraph(requestGpuPurge: true);
+
+            CommitGraphMutation(copiedNodes.Count == 1 ? "Cut node" : $"Cut {copiedNodes.Count} nodes", historyBefore);
         }
 
 
@@ -147,6 +152,8 @@ namespace SmartExchanger.ViewModels
                 return;
             }
 
+            EditorHistorySnapshot historyBefore = CaptureBeforeGraphMutation();
+
             /*
              * The graph is modified only after the entire copied
              * fragment has been reconstructed successfully.
@@ -176,7 +183,7 @@ namespace SmartExchanger.ViewModels
             }
 
             InvalidateGraph(requestGpuPurge: false);
-
+            CommitGraphMutation(pasteResult.Nodes.Count == 1 ? "Paste node" : $"Paste {pasteResult.Nodes.Count} nodes", historyBefore);
             ShowPasteWarnings(pasteResult.Warnings);
         }
 
