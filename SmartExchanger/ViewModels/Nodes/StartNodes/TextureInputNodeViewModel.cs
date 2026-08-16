@@ -20,6 +20,9 @@ namespace SmartExchanger.ViewModels.Nodes
         [ObservableProperty]
         private bool _hasTexture;
 
+        [ObservableProperty]
+        private bool _flipVertically;
+
         public string FileName => FilePath is null ? "No texture selected" : Path.GetFileName(FilePath);
 
         public ConnectorViewModel OutputConnector { get; }
@@ -186,11 +189,15 @@ namespace SmartExchanger.ViewModels.Nodes
 
             try
             {
-                canvas.Scale(
+                if (FlipVertically)
+                {
+                    canvas.Scale(
                     sx: 1.0f,
                     sy: -1.0f,
                     px: size * 0.5f,
                     py: size * 0.5f);
+                }
+                
 
                 canvas.DrawImage(sourceImage, sourceRect, destination, sampling);
             }
@@ -209,7 +216,7 @@ namespace SmartExchanger.ViewModels.Nodes
 
         protected override bool IsRenderAffectingProperty(string? propertyName)
         {
-            return false;
+            return propertyName == nameof(FlipVertically);
         }
 
         public void Dispose()

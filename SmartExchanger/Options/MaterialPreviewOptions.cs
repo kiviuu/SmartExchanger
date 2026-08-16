@@ -1,4 +1,6 @@
-﻿namespace SmartExchanger.Options
+﻿using SmartExchanger.Models;
+
+namespace SmartExchanger.Options
 {
     public sealed class MaterialPreviewOptions
     {
@@ -8,5 +10,11 @@
         public float DefaultRoughness { get; set; } = 0.5f;
         public float DefaultMetallic { get; set; } = 0.0f;
         public float AmbientOcclusion { get; set; } = 1.0f;
+
+
+        public MaterialMappingMode DefaultMappingMode { get; set; } = MaterialMappingMode.Triplanar;
+        public float TriplanarScale { get; set; } = 1.0f;
+        public float TriplanarBlendSharpness { get; set; } = 4.0f;
+        public float TriplanarNormalStrength { get; set; } = 1.0f;
     }
 }

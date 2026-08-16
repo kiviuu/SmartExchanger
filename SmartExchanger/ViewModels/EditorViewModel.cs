@@ -1,23 +1,22 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 using SkiaSharp;
-using SkiaSharp.Views.WPF;
 using SmartExchanger.Models;
 using SmartExchanger.Options;
 using SmartExchanger.Persistence;
 using SmartExchanger.Services;
+using SmartExchanger.Services.Graphics;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Packaging;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using SmartExchanger.History;
+using System.Windows.Threading;
 
 namespace SmartExchanger.ViewModels
 {
@@ -33,6 +32,8 @@ namespace SmartExchanger.ViewModels
         private readonly IShaderService shaderService;
         private readonly INodeFactory nodeFactory;
         private readonly IGraphPersistenceService graphPersistenceService;
+        private readonly ISkiaGpuRenderHost _gpuRenderHost;
+        private readonly INodeStateSerializer nodeStateSerializer;
 
         private readonly RenderingOptions _renderingOptions;
         private readonly ExportOptions _exportOptions;
@@ -44,6 +45,7 @@ namespace SmartExchanger.ViewModels
 
         public ObservableCollection<BaseNodeViewModel> Nodes { get; } = new();
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new();
+        public ObservableCollection<BaseNodeViewModel> SelectedNodes { get; } = new();
         public ObservableCollection<ConnectionViewModel> SelectedConnections { get; } = new();
 
         private readonly Dictionary<BaseNodeViewModel, Action> _nodePropertyHandlers =
@@ -59,7 +61,6 @@ namespace SmartExchanger.ViewModels
 
 
         // One persistnet SKGElement is the owner of this GRContext
-        private GRContext? _graphicsContext;
         private Action? _requestGpuRender;
 
         private long _graphRevision;
@@ -71,24 +72,44 @@ namespace SmartExchanger.ViewModels
         private bool _isDisposed;
 
         public EditorViewModel(IShaderService shaderService, INodeFactory nodeFactory, IGraphPersistenceService graphPersistenceService,
-            IOptions<RenderingOptions> renderingOptions,
-            IOptions<ExportOptions> exportOptions)
+            IOptions<RenderingOptions> renderingOptions, IOptions<ExportOptions> exportOptions, IOptions<UndoRedoOptions> undoRedoOptions,
+            ISkiaGpuRenderHost gpuRenderHost ,INodeStateSerializer nodeStateSerializer)
         {
             this.shaderService = shaderService ?? throw new ArgumentNullException(nameof(shaderService));
             this.nodeFactory = nodeFactory ?? throw new ArgumentNullException(nameof(nodeFactory));
             this.graphPersistenceService = graphPersistenceService ?? throw new ArgumentNullException(nameof(graphPersistenceService));
+            this.nodeStateSerializer = nodeStateSerializer ?? throw new ArgumentNullException(nameof(nodeStateSerializer));
+
+            this._gpuRenderHost = gpuRenderHost ?? throw new ArgumentNullException(nameof(gpuRenderHost));
             ArgumentNullException.ThrowIfNull(renderingOptions);
             ArgumentNullException.ThrowIfNull(exportOptions);
+            ArgumentNullException.ThrowIfNull(undoRedoOptions);
             this._renderingOptions = renderingOptions.Value;
             this._exportOptions = exportOptions.Value;
 
             this._minimumGpuCacheBytes = checked((long)_renderingOptions.MinimumGpuCacheMb * 1024L * 1024L);
             this._maximumGpuCacheBytes = checked((long)_renderingOptions.MaximumGpuCacheMb * 1024L * 1024L);
 
+            UndoRedoOptions historyOptions = undoRedoOptions.Value;
+
+            _undoRedoManager = new UndoRedoManager(historyOptions.Capacity);
+
+            _undoRedoManager.StateChanged += OnUndoRedoManagerStateChanged;
+
+            _historyCommitTimer = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromMilliseconds(historyOptions.CommitDelayMilliseconds)
+            };
+            this._historyCommitTimer.Tick += OnHistoryCommitTimerTick;
+
+            SelectedNodes.CollectionChanged += OnSelectedNodesChanged;
+
             SetupDefaultScene();
             UpdateConnectorStates();
-        }
 
+            this._gpuRenderHost.SetRenderCallback(RenderPendingOutputs);
+            SetGpuRenderRequest(_gpuRenderHost.RequestRender);
+        }
         public void SetGpuRenderRequest(Action? requestGpuRender)
         {
             if (_isDisposed)
@@ -106,160 +127,6 @@ namespace SmartExchanger.ViewModels
             }
         }
 
-        public void SetGraphicsContext(GRContext context)
-        {
-            ArgumentNullException.ThrowIfNull(context);
-
-            if (_isDisposed || ReferenceEquals(_graphicsContext, context))
-            {
-                return;
-            }
-
-            _graphicsContext = context;
-            _configuredGpuCacheLimitBytes = 0;
-            _renderedGraphRevision = -1;
-            _purgeOnNextRender = true;
-        }
-
-        private void SetupDefaultScene()
-        {
-            AddNodeInternal(CreateDefaultTextureSizeNode());
-        }
-
-        private void AddNodeInternal(BaseNodeViewModel node)
-        {
-            Action handler = () => OnNodePropertiesChanged(node);
-            _nodePropertyHandlers.Add(node, handler);
-            node.PropsChanged += handler;
-            Nodes.Add(node);
-        }
-
-        private void DetachNode(BaseNodeViewModel node)
-        {
-            if (_nodePropertyHandlers.Remove(node, out var handler))
-            {
-                node.PropsChanged -= handler;
-            }
-        }
-
-        private void OnNodePropertiesChanged(BaseNodeViewModel node)
-        {
-            InvalidateGraph(requestGpuPurge: node is TextureSizeNodeViewModel);
-        }
-
-        [RelayCommand]
-        private void StartConnection(object? parameter)
-        {
-            if (!_isDisposed)
-            {
-                _pendingSourceConnector = parameter as ConnectorViewModel;
-            }
-        }
-
-        [RelayCommand]
-        private void CompleteConnection(object? parameter)
-        {
-            if (_isDisposed)
-            {
-                _pendingSourceConnector = null;
-                return;
-            }
-
-            try
-            {
-                if (parameter is not ValueTuple<object, object> tuple ||
-                    tuple.Item2 is not ConnectorViewModel targetConnector)
-                {
-                    return;
-                }
-
-                var sourceConnector = _pendingSourceConnector;
-                if (sourceConnector is null || sourceConnector == targetConnector)
-                {
-                    return;
-                }
-
-                if (sourceConnector.Node == targetConnector.Node)
-                {
-                    return;
-                }
-
-                bool isSourceOutput = sourceConnector.Node.Outputs.Contains(sourceConnector);
-                bool isTargetInput = targetConnector.Node.Inputs.Contains(targetConnector);
-                if (!isSourceOutput || !isTargetInput)
-                {
-                    return;
-                }
-
-                if (WouldCreateCycle(sourceConnector.Node, targetConnector.Node))
-                {
-                    return;
-                }
-
-                var previous = Connections.FirstOrDefault(c => c.Target == targetConnector);
-                if (previous is not null)
-                {
-                    RemoveConnectionInternal(previous);
-                }
-
-                Connections.Add(new ConnectionViewModel(sourceConnector, targetConnector));
-                InvalidateGraph(requestGpuPurge: true);
-            }
-            finally
-            {
-                _pendingSourceConnector = null;
-            }
-        }
-
-        [RelayCommand]
-        private void DisconnectConnector(object? parameter)
-        {
-            if (_isDisposed || parameter is not ConnectorViewModel connector)
-            {
-                return;
-            }
-
-            var toRemove = Connections
-                .Where(c => c.Source == connector || c.Target == connector)
-                .ToList();
-
-            if (toRemove.Count == 0)
-            {
-                return;
-            }
-
-            foreach (var connection in toRemove)
-            {
-                RemoveConnectionInternal(connection);
-            }
-
-            InvalidateGraph(requestGpuPurge: true);
-        }
-
-        [RelayCommand]
-        private void RemoveConnection(object? parameter)
-        {
-            if (_isDisposed || parameter is not ConnectionViewModel connection)
-            {
-                return;
-            }
-
-            if (!Connections.Contains(connection))
-            {
-                SelectedConnections.Remove(connection);
-                return;
-            }
-
-            RemoveConnectionInternal(connection);
-            InvalidateGraph(requestGpuPurge: true);
-        }
-
-        private void RemoveConnectionInternal(ConnectionViewModel connection)
-        {
-            Connections.Remove(connection);
-            SelectedConnections.Remove(connection);
-        }
-
         private void InvalidateGraph(bool requestGpuPurge)
         {
             unchecked
@@ -272,89 +139,64 @@ namespace SmartExchanger.ViewModels
             RequestGpuRender();
         }
 
-        private void UpdateConnectorStates()
-        {
-            foreach (var node in Nodes)
-            {
-                foreach (var input in node.Inputs)
-                {
-                    input.IsConnected = Connections.Any(c => c.Target == input);
-                }
-
-                foreach (var output in node.Outputs)
-                {
-                    output.IsConnected = Connections.Any(c => c.Source == output);
-                }
-            }
-        }
-
         private void RequestGpuRender()
         {
             _requestGpuRender?.Invoke();
         }
 
-        /// <summary>
-        /// Invoked only from persistent SKGElement (from PaintSurface event)
-        /// </summary>
-        public void RenderPendingOutputs(GRContext context, SKCanvas hostCanvas)
+        public void RenderPendingOutputs(GRContext context)
         {
             ArgumentNullException.ThrowIfNull(context);
-            ArgumentNullException.ThrowIfNull(hostCanvas);
-
-            hostCanvas.Clear(SKColors.Transparent);
 
             if (_isDisposed || context.IsAbandoned || _isRendering)
             {
                 return;
             }
 
-            SetGraphicsContext(context);
             ConfigureGpuResourceCache(context, GetTextureSize());
 
             bool graphChanged = _renderedGraphRevision != _graphRevision;
-            bool hasPendingExports = _pendingExports.Count > 0;
+            bool hasPendingExports = _pendingExports.Count() > 0;
 
-            if (!graphChanged && !_purgeOnNextRender && !hasPendingExports)
+            if(!graphChanged && !_purgeOnNextRender && !hasPendingExports)
             {
                 return;
             }
-
             _isRendering = true;
-
             try
             {
-                // Purge has to be invoked with active OpenGL context!
+                // Flush and purge must be executed through
+                // the GRContext that owns the GPU resources.
                 if (_purgeOnNextRender)
                 {
                     FlushAndPurge(context);
                 }
-
                 if (graphChanged)
                 {
-                    int textureSize = GetTextureSize();
+                    int texturSize = GetTextureSize();
+
                     var outputs = Nodes.OfType<OutputNodeViewModel>().ToList();
 
-                    foreach (var output in outputs)
+                    foreach(var output in outputs)
                     {
-                        RenderOutputPreview(output, context, textureSize);
+                        RenderOutputPreview(output, context, texturSize);
                     }
-
                     RenderTexturePreview(context);
                     RenderMaterialPreview(context);
                     _renderedGraphRevision = _graphRevision;
                 }
                 ProcessPendingExports(context);
-
                 FlushAndPurge(context);
                 _purgeOnNextRender = false;
-
                 LogGpuCacheUsage(context, GetTextureSize());
+
             }
-            catch (Exception exception)
+            catch(System.Exception ex)
             {
                 _renderedGraphRevision = -1;
                 _purgeOnNextRender = true;
-                Debug.WriteLine($"[Skia GPU] Render failed: {exception}");
+                Debug.WriteLine($"[Skia GPU] Render failed: {ex}");
+
                 throw;
             }
             finally
@@ -421,12 +263,7 @@ namespace SmartExchanger.ViewModels
             return bitmap;
         }
 
-        private int GetTextureSize()
-        {
-            return Nodes.OfType<TextureSizeNodeViewModel>().FirstOrDefault()?
-                    .SelectedSize ??
-                    _renderingOptions.DefaultTextureSize;
-        }
+        
 
         /// <summary>
         /// Conigure GPU resource caching
@@ -621,103 +458,6 @@ namespace SmartExchanger.ViewModels
                 $"limitBytes={context.GetResourceCacheLimit():N0}");
         }
 
-        [RelayCommand]
-        private void DeleteSelection()
-        {
-            if (_isDisposed)
-            {
-                return;
-            }
-
-            var toRemove = SelectedConnections.ToList();
-            if (toRemove.Count == 0)
-            {
-                return;
-            }
-
-            foreach (var connection in toRemove)
-            {
-                RemoveConnectionInternal(connection);
-            }
-
-            SelectedConnections.Clear();
-            InvalidateGraph(requestGpuPurge: true);
-        }
-
-
-
-        /* TODO: maybe some reflection ? */
-        [RelayCommand]
-        private void CreateNode(NodeType nodeType)
-        {
-            if (_isDisposed)
-            {
-                return;
-            }
-
-            // Nodes that may exist only once in the graph
-            if (nodeType == NodeType.TextureSizeNode &&
-                Nodes.OfType<TextureSizeNodeViewModel>().Any())
-            {
-                return;
-            }
-            if (nodeType == NodeType.MaterialOutputNode &&
-                Nodes.OfType<MaterialOutputNodeViewModel>().Any())
-            {
-                return;
-            }
-            if (nodeType == NodeType.TexturePreviewNode && Nodes.OfType<TexturePreviewNodeViewModel>().Any())
-            {
-                return;
-            }
-
-            var mousePosition = Mouse.GetPosition(Application.Current.MainWindow);
-
-            BaseNodeViewModel newNode = nodeFactory.Create(nodeType);
-
-            newNode.Location = new Point(mousePosition.X - 100, mousePosition.Y - 50);
-            AddNodeInternal(newNode);
-            InvalidateGraph(requestGpuPurge: false);
-        }
-
-        [RelayCommand]
-        private void DeleteNode(BaseNodeViewModel node)
-        {
-            if (_isDisposed || node is null || !Nodes.Contains(node))
-            {
-                return;
-            }
-
-            if (node is TextureSizeNodeViewModel)
-            {
-                return;
-            }
-
-            if (_pendingSourceConnector?.Node == node)
-            {
-                _pendingSourceConnector = null;
-            }
-
-            var connectedEdges = Connections
-                .Where(c => c.Source.Node == node || c.Target.Node == node)
-                .ToList();
-
-            foreach (var connection in connectedEdges)
-            {
-                RemoveConnectionInternal(connection);
-            }
-
-            if (node is OutputNodeViewModel outputNode)
-            {
-                outputNode.ClearPreview();
-            }
-
-            DetachNode(node);
-            DisposeNode(node);
-            Nodes.Remove(node);
-            InvalidateGraph(requestGpuPurge: true);
-        }
-
         private List<BaseNodeViewModel> GetTopologicallySortedNodes(
             BaseNodeViewModel targetNode, ConnectorViewModel targetInput)
         {
@@ -810,35 +550,6 @@ namespace SmartExchanger.ViewModels
             return false;
         }
 
-        public void ForceReleaseVRAM()
-        {
-            if (_isDisposed)
-            {
-                return;
-            }
-
-            _purgeOnNextRender = true;
-            RequestGpuRender();
-        }
-
-        /// <summary>
-        /// Mthod is called only from persistent object (SKGElement) with GPU access
-        /// </summary>
-        public void ClearGraphicsContext(GRContext context)
-        {
-            ArgumentNullException.ThrowIfNull(context);
-
-            if (!ReferenceEquals(_graphicsContext, context))
-            {
-                return;
-            }
-
-            _graphicsContext = null;
-            _configuredGpuCacheLimitBytes = 0;
-            _renderedGraphRevision = -1;
-            _purgeOnNextRender = true;
-        }
-
         [RelayCommand]
         private void CleanupGraphics()
         {
@@ -853,9 +564,11 @@ namespace SmartExchanger.ViewModels
             }
 
             _isDisposed = true;
+            SelectedNodes.CollectionChanged -= OnSelectedNodesChanged;
+            DisposeUndoRedoHistory();
+            _gpuRenderHost.SetRenderCallback(null);
             _pendingSourceConnector = null;
             _requestGpuRender = null;
-            _graphicsContext = null;
 
             foreach (var output in Nodes.OfType<OutputNodeViewModel>())
             {
@@ -870,6 +583,7 @@ namespace SmartExchanger.ViewModels
 
             Connections.Clear();
             SelectedConnections.Clear();
+            SelectedNodes.Clear();
             Nodes.Clear();
             _pendingExports.Clear();
 
@@ -896,54 +610,7 @@ namespace SmartExchanger.ViewModels
             public int GetHashCode(T obj) => RuntimeHelpers.GetHashCode(obj);
         }
 
-        [RelayCommand]
-        private void ClearWorkspace()
-        {
-            var result = System.Windows.MessageBox.Show("Are you sure you want to clear the workspace? This process cannot be undone!",
-                "Clear workspace", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result != MessageBoxResult.Yes)
-            {
-                return;
-            }
 
-            if (_isDisposed)
-            {
-                return;
-            }
-            _pendingSourceConnector = null;
-            foreach (var node in Nodes.OfType<OutputNodeViewModel>())
-            {
-                node.ClearPreview();
-            }
-            foreach(var node in Nodes.ToList())
-            {
-                DetachNode(node);
-                DisposeNode(node);
-            }
-            Connections.Clear();
-            SelectedConnections.Clear();
-            Nodes.Clear();
-            AddNodeInternal(CreateDefaultTextureSizeNode());
-
-            CurrentProjectPath = null;
-
-            InvalidateGraph(true);
-        }
-
-        private TextureSizeNodeViewModel CreateDefaultTextureSizeNode()
-        {
-            var node =(TextureSizeNodeViewModel)nodeFactory.Create(NodeType.TextureSizeNode);
-            node.Location = new Point(0, 0);
-            return node;
-        }
-
-        private static void DisposeNode(BaseNodeViewModel node)
-        {
-            if (node is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-        }
 
         // Export texture
         private enum TextureExportFormat
@@ -1016,7 +683,7 @@ namespace SmartExchanger.ViewModels
                 {
                     ExportOutput(context, exportRequest);
                 }
-                catch(Exception ex)
+                catch(System.Exception ex)
                 {
                     Debug.WriteLine($"[Texture export] Export failed: {ex}");
                     Application.Current?.Dispatcher.BeginInvoke(
@@ -1156,7 +823,7 @@ namespace SmartExchanger.ViewModels
 
             //byte[]? baseColorPng = baseColorImage is null ? null :
             //    EncodeMaterialPreviewTexture(context, baseColorImage, _materialPreviewTextureSize);
-            bool isTransparent = opacityImage is not null;
+            bool isTransparent = true;
             byte[]? normalPng = normalImage is null ? null :
                 EncodeMaterialPreviewTexture(context, normalImage, _renderingOptions.MaterialPreviewSize);
 
@@ -1178,9 +845,24 @@ namespace SmartExchanger.ViewModels
                         ? null
                         : EncodeMaterialPreviewTexture(context, roughnessMetallicImage, _renderingOptions.MaterialPreviewSize);
 
-                baseColorOpacityImage = BuildBaseColorOpacityImage(context, _renderingOptions.MaterialPreviewSize, baseColorImage, opacityImage);
-                byte[]? baseColorOpacityPng = baseColorOpacityImage is null ? null :
-                    EncodeMaterialPreviewTexture(context, baseColorOpacityImage, _renderingOptions.MaterialPreviewSize);
+                byte[]? baseColorOpacityPng = null;
+
+                if (baseColorImage is not null || opacityImage is not null)
+                {
+                    baseColorOpacityImage =
+                        BuildBaseColorOpacityImage(
+                            context,
+                            _renderingOptions.MaterialPreviewSize,
+                            baseColorImage,
+                            opacityImage);
+
+                    baseColorOpacityPng =
+                        EncodeMaterialPreviewTexture(
+                            context,
+                            baseColorOpacityImage,
+                            _renderingOptions.MaterialPreviewSize);
+                }
+
                 PublishMaterialPreview(
                     new MaterialPreviewFrame(
                         BaseColorPng: baseColorOpacityPng,

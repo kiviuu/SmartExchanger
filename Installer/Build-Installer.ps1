@@ -455,6 +455,11 @@ $shadersDirectory =
         -Path $publishDirectory `
         -ChildPath "Shaders"
 
+$compiledHelixShadersDirectory =
+    Join-Path `
+        -Path $publishDirectory `
+        -ChildPath "Shaders\MaterialPreview\Helix\PS"
+
 
 $environmentMapsDirectory =
     Join-Path `
@@ -466,6 +471,28 @@ Assert-DirectoryContainsFiles `
     -Path $shadersDirectory `
     -Filter "*.sksl" `
     -Description "Shaders"
+
+$requiredCompiledShaders = @(
+    "psMeshPBRTriplanar.cso",
+    "psMeshPBRTriplanarOIT.cso",
+    "psMeshPBRTriplanarOITDP.cso"
+)
+
+foreach ($shader in $requiredCompiledShaders)
+{
+    $shaderPath =
+        Join-Path `
+            -Path $compiledHelixShadersDirectory `
+            -ChildPath $shader
+
+    Assert-FileExists `
+        -Path $shaderPath `
+        -Description "Compiled Helix shader"
+
+    Write-Host `
+        "  OK: $shader" `
+        -ForegroundColor Green
+}
 
 
 Assert-DirectoryContainsFiles `

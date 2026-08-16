@@ -1,10 +1,7 @@
 ﻿using SkiaSharp;
 using SmartExchanger.Models;
 using SmartExchanger.Options;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Text.Json;
 
 namespace SmartExchanger.Services
@@ -37,7 +34,8 @@ namespace SmartExchanger.Services
                     new TextureInputNodeState(
                         ConvertTexturePathForSave(
                             textureInput.FilePath,
-                            projectDirectory)),
+                            projectDirectory),
+                        textureInput.FlipVertically),
 
                 LinearGradientNodeViewModel linearGradient =>
                     new LinearGradientNodeState(
@@ -173,6 +171,8 @@ namespace SmartExchanger.Services
                 case TextureInputNodeViewModel textureInput:
                     {
                         TextureInputNodeState data = Deserialize<TextureInputNodeState>(state, node);
+
+                        textureInput.FlipVertically = data.FlipVertically ?? true;
 
                         if (string.IsNullOrWhiteSpace(data.FilePath))
                         {

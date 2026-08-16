@@ -4,34 +4,261 @@
              xmlns:hx="http://helix-toolkit.org/wpf/SharpDX">
 
     <Grid Background="#202020">
+
         <Border Background="#202020"
                 BorderBrush="#383838"
                 BorderThickness="1,0,0,0">
 
             <Grid>
+
                 <Grid.RowDefinitions>
                     <RowDefinition Height="42" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
+                <!-- Header -->
                 <Border Grid.Row="0"
                         Background="#252525"
                         BorderBrush="#383838"
                         BorderThickness="0,0,0,1">
+
                     <Grid Margin="12,0,8,0">
+
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="160" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ComboBox Grid.Column="2"
+
+                        <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Foreground="#E0E0E0"
+                                   FontWeight="SemiBold"
+                                   Text="Material Preview" />
+
+                        <TextBlock Grid.Column="2"
+                                   Margin="8,0,6,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="#AFAFAF"
+                                   Text="Environment" />
+
+                        <ComboBox Grid.Column="3"
                                   Height="30"
                                   VerticalAlignment="Center"
                                   ItemsSource="{Binding AvailableEnvironmentMaps}"
-                                  SelectedItem="{Binding SelectedEnvironmentMap, Mode=TwoWay}"
+                                  SelectedItem="{Binding SelectedEnvironmentMap,
+                                                         Mode=TwoWay}"
                                   DisplayMemberPath="DisplayName" />
+
+                        <ToggleButton x:Name="PreviewSettingsButton"
+                                      Grid.Column="4"
+                                      Width="30"
+                                      Height="30"
+                                      Margin="8,0,0,0"
+                                      VerticalAlignment="Center"
+                                      HorizontalContentAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      FontFamily="Segoe UI Symbol"
+                                      FontSize="16"
+                                      Content="⚙"
+                                      ToolTip="Preview settings" />
+
                     </Grid>
                 </Border>
+
+                <!-- Settings Popup -->
+                <Popup PlacementTarget="{Binding ElementName=PreviewSettingsButton}"
+                       Placement="Bottom"
+                       HorizontalOffset="-310"
+                       VerticalOffset="6"
+                       AllowsTransparency="True"
+                       StaysOpen="False"
+                       PopupAnimation="Fade"
+                       IsOpen="{Binding IsChecked,
+                                        ElementName=PreviewSettingsButton,
+                                        Mode=TwoWay}">
+
+                    <Border Width="340"
+                            Padding="14"
+                            Background="#2B2B2B"
+                            BorderBrush="#4A4A4A"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            TextElement.Foreground="#E6E6E6">
+
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="16"
+                                              ShadowDepth="4"
+                                              Opacity="0.45" />
+                        </Border.Effect>
+
+                        <StackPanel>
+
+                            <TextBlock Margin="0,0,0,14"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Text="Preview settings" />
+
+                            <!-- Mapping -->
+                            <Grid Margin="0,0,0,12">
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           VerticalAlignment="Center"
+                                           Foreground="#C8C8C8"
+                                           Text="Mapping" />
+
+                                <ComboBox Grid.Column="1"
+                                          Height="28"
+                                          ItemsSource="{Binding AvailableMappingModes}"
+                                          SelectedItem="{Binding SelectedMappingMode,
+                                                                 Mode=TwoWay}" />
+
+                            </Grid>
+
+                            <Separator Margin="0,0,0,12"
+                                       Background="#454545" />
+
+                            <TextBlock Margin="0,0,0,10"
+                                       FontWeight="SemiBold"
+                                       Text="Triplanar settings" />
+
+                            <!-- Settings for Triplanar -->
+                            <StackPanel IsEnabled="{Binding IsTriplanarMapping}">
+
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Opacity"
+                                                Value="1" />
+
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTriplanarMapping}"
+                                                         Value="False">
+                                                <Setter Property="Opacity"
+                                                        Value="0.45" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+
+                                <!-- Scale -->
+                                <Grid Margin="0,0,0,10">
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="48" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               VerticalAlignment="Center"
+                                               Foreground="#C8C8C8"
+                                               Text="Scale" />
+
+                                    <Slider Grid.Column="1"
+                                            Margin="0,0,10,0"
+                                            Minimum="0.1"
+                                            Maximum="16"
+                                            SmallChange="0.1"
+                                            LargeChange="1"
+                                            Value="{Binding TriplanarScale,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}"
+                                            ToolTip="Controls texture tiling frequency." />
+
+                                    <TextBlock Grid.Column="2"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Right"
+                                               Text="{Binding TriplanarScale,
+                                                              StringFormat={}{0:F2}}" />
+
+                                </Grid>
+
+                                <!-- Sharpness -->
+                                <Grid Margin="0,0,0,10">
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="48" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               VerticalAlignment="Center"
+                                               Foreground="#C8C8C8"
+                                               Text="Blend sharpness" />
+
+                                    <Slider Grid.Column="1"
+                                            Margin="0,0,10,0"
+                                            Minimum="1"
+                                            Maximum="16"
+                                            SmallChange="0.1"
+                                            LargeChange="1"
+                                            Value="{Binding TriplanarBlendSharpness,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}"
+                                            ToolTip="Controls how sharply the three projections are blended." />
+
+                                    <TextBlock Grid.Column="2"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Right"
+                                               Text="{Binding TriplanarBlendSharpness,
+                                                              StringFormat={}{0:F2}}" />
+
+                                </Grid>
+
+                                <!-- Normal strength -->
+                                <Grid Margin="0,0,0,14">
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="48" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               VerticalAlignment="Center"
+                                               Foreground="#C8C8C8"
+                                               Text="Normal strength" />
+
+                                    <Slider Grid.Column="1"
+                                            Margin="0,0,10,0"
+                                            Minimum="0"
+                                            Maximum="4"
+                                            SmallChange="0.1"
+                                            LargeChange="0.5"
+                                            Value="{Binding TriplanarNormalStrength,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}"
+                                            ToolTip="Controls the strength of the triplanar normal map." />
+
+                                    <TextBlock Grid.Column="2"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Right"
+                                               Text="{Binding TriplanarNormalStrength,
+                                                              StringFormat={}{0:F2}}" />
+
+                                </Grid>
+
+                            </StackPanel>
+
+                            <Button Height="28"
+                                    HorizontalAlignment="Right"
+                                    Padding="14,0"
+                                    Command="{Binding ResetMappingSettingsCommand}"
+                                    Content="Reset" />
+
+                        </StackPanel>
+                    </Border>
+                </Popup>
+
+                <!-- Viewport -->
                 <hx:Viewport3DX Grid.Row="1"
                                 BackgroundColor="#181818"
                                 Camera="{Binding Camera}"
@@ -42,8 +269,11 @@
                                 ShowViewCube="False"
                                 OITRenderMode="DepthPeeling"
                                 OITDepthPeelingIteration="4">
-                    <hx:AmbientLight3D Color="#101010"/>
-                    <hx:DirectionalLight3D Color="White" Direction="-1,-1,-2"/>
+
+                    <hx:AmbientLight3D Color="#101010" />
+
+                    <hx:DirectionalLight3D Color="White"
+                                           Direction="-1,-1,-2" />
 
                     <hx:EnvironmentMap3D x:Name="EnvironmentMap"
                                          Texture="{Binding EnvironmentTexture}"
@@ -51,11 +281,13 @@
 
                     <hx:MeshGeometryModel3D Geometry="{Binding SphereGeometry}"
                                             Material="{Binding SphereMaterial}"
+                                            Transform="{Binding SphereTransform}"
                                             IsTransparent="{Binding IsSphereTransparent}"
-                                            CullMode="None"/>
+                                            CullMode="None" />
+
                 </hx:Viewport3DX>
+
             </Grid>
-            
         </Border>
     </Grid>
 </UserControl>

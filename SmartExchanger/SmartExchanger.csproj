@@ -13,9 +13,9 @@
   </PropertyGroup>
 
 	<PropertyGroup>
-		<Version>1.0.0-alpha.2</Version>
-		<AssemblyVersion>1.0.0.0</AssemblyVersion>
-		<FileVersion>1.0.0.0</FileVersion>
+		<Version>1.2.1</Version>
+		<AssemblyVersion>1.2.1.0</AssemblyVersion>
+		<FileVersion>1.2.1.0</FileVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -36,15 +36,33 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.9" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     <PackageReference Include="Nodify" Version="7.3.0" />
-    <PackageReference Include="SkiaSharp" Version="4.150.0" />
-    <PackageReference Include="SkiaSharp.Views" Version="4.150.0" />
-    <PackageReference Include="SkiaSharp.Views.WPF" Version="4.150.0" />
-    <PackageReference Include="OpenTK" Version="4.9.4" />
-    <PackageReference Include="OpenTK.GLWpfControl" Version="4.3.3" />
+    <PackageReference Include="SkiaSharp" Version="4.150.1" />
+	<PackageReference Include="SkiaSharp.Direct3D.Vortice" Version="4.150.1" />
+	<PackageReference Include="Vortice.Direct3D12" Version="3.8.3" />
+	<PackageReference Include="Vortice.DXGI" Version="3.8.3" />
+
+	  <PackageReference Include="JeremyAnsel.HLSL.Targets" Version="2.0.29" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup>
+	<ItemGroup>
+		<HLSLShader Include="Shaders\MaterialPreview\Helix\PS\psMeshPBRTriplanar.hlsl">
+			<ShaderProfile>ps_4_0</ShaderProfile>
+		</HLSLShader>
+
+		<HLSLShader Include="Shaders\MaterialPreview\Helix\PS\psMeshPBRTriplanarOIT.hlsl">
+			<ShaderProfile>ps_4_0</ShaderProfile>
+		</HLSLShader>
+
+		<HLSLShader Include="Shaders\MaterialPreview\Helix\PS\psMeshPBRTriplanarOITDP.hlsl">
+			<ShaderProfile>ps_4_0</ShaderProfile>
+		</HLSLShader>
+	</ItemGroup>
+
+
+	<ItemGroup>
+    <Folder Include="Helpers\" />
     <Folder Include="Repositories\" />
+    <Folder Include="Shaders\MaterialPreview\Helix\Common\" />
   </ItemGroup>
   <ItemGroup>
 	  <Content Include="Shaders\**\*.sksl">
@@ -74,5 +92,16 @@
 		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 	  </None>
   </ItemGroup>
+	<Target Name="CopyCompiledHelixShadersToPublish"
+			AfterTargets="Publish">
 
+		<ItemGroup>
+			<CompiledHelixShaders Include="$(OutputPath)Shaders\MaterialPreview\Helix\**\*.cso" />
+		</ItemGroup>
+
+		<Copy SourceFiles="@(CompiledHelixShaders)"
+			  DestinationFiles="@(CompiledHelixShaders->'$(PublishDir)Shaders\MaterialPreview\Helix\%(RecursiveDir)%(Filename)%(Extension)')"
+			  SkipUnchangedFiles="true" />
+
+	</Target>
 </Project>

@@ -1,8 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using HelixToolkit.Geometry;
 using HelixToolkit.SharpDX;
 using HelixToolkit.Wpf.SharpDX;
+using Microsoft.Extensions.Options;
 using SmartExchanger.Models;
+using SmartExchanger.Options;
+using SmartExchanger.Rendering.MaterialPreview.Triplanar;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -11,16 +15,44 @@ using System.Windows.Media.Media3D;
 using Material = HelixToolkit.Wpf.SharpDX.Material;
 using MeshGeometry3D = HelixToolkit.SharpDX.MeshGeometry3D;
 using PerspectiveCamera = HelixToolkit.Wpf.SharpDX.PerspectiveCamera;
-using Microsoft.Extensions.Options;
-using SmartExchanger.Options;
 
 namespace SmartExchanger.ViewModels
 {
     public partial class MaterialPreviewViewModel : ObservableObject, IDisposable
     {
+        private const bool ForceOitPreviewPass = true;
+
+        private const double MinimumTriplanarScale = 0.1;
+        private const double MaximumTriplanarScale = 16.0;
+        private const double MinimumBlendSharpness = 1.0;
+        private const double MaximumBlendSharpness = 16.0;
+        private const double MinimumNormalStrength = 0.0;
+        private const double MaximumNormalStrength = 4.0;
+        public IReadOnlyList<MaterialMappingMode> AvailableMappingModes { get; } = Enum.GetValues<MaterialMappingMode>();
+        public bool IsTriplanarMapping => SelectedMappingMode == MaterialMappingMode.Triplanar;
+
+        [ObservableProperty]
+        private MaterialMappingMode _selectedMappingMode;
+
+        [ObservableProperty]
+        private double _triplanarScale;
+
+        [ObservableProperty]
+        private double _triplanarBlendSharpness;
+
+        [ObservableProperty]
+        private double _triplanarNormalStrength;
+
+
         private bool _isDisposed;
         private readonly MaterialPreviewOptions _options;
         private readonly string _environmentMapsDirectory;
+
+        // division around the sphere and between poles
+        private const int SphereThetaDivisions = 128;
+        private const int SpherePhiDivisions = 64;
+
+        public Transform3D SphereTransform { get; } = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1.0, 0.0, 0.0), -90.0));
         public DefaultEffectsManager EffectsManager { get; }
         public PerspectiveCamera Camera { get; }
         public MeshGeometry3D SphereGeometry { get; }
@@ -43,7 +75,7 @@ namespace SmartExchanger.ViewModels
             this._environmentMapsDirectory = Path.IsPathRooted(_options.EnvironmentMapsDirectory) ? _options.EnvironmentMapsDirectory :
                 Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, _options.EnvironmentMapsDirectory));
 
-            this.EffectsManager = new DefaultEffectsManager();
+            this.EffectsManager = new TriplanarEffectsManager();
 
             this.Camera = new PerspectiveCamera
             {
@@ -55,27 +87,44 @@ namespace SmartExchanger.ViewModels
             };
 
             var sphereBuilder = new MeshBuilder();
-            sphereBuilder.AddSphere(Vector3.Zero, 1.0f);
+            sphereBuilder.AddSphere(
+                    center: Vector3.Zero,
+                    radius: 1.0f,
+                    thetaDiv: SphereThetaDivisions,
+                    phiDiv: SpherePhiDivisions
+                );
             SphereGeometry = sphereBuilder.ToMeshGeometry3D();
 
-            SphereMaterial = new PBRMaterial
+
+            _selectedMappingMode = _options.DefaultMappingMode;
+
+            _triplanarScale = ClampTriplanarScale(_options.TriplanarScale);
+
+            _triplanarBlendSharpness = ClampBlendSharpness(_options.TriplanarBlendSharpness);
+
+            _triplanarNormalStrength = ClampNormalStrength(_options.TriplanarNormalStrength);
+
+            SphereMaterial = new TriplanarPBRMaterial()
             {
                 AlbedoColor = new HelixToolkit.Maths.Color4(1f, 1f, 1f, 1f),
                 RoughnessFactor = _options.DefaultRoughness,
                 MetallicFactor = _options.DefaultMetallic,
                 AmbientOcclusionFactor = _options.AmbientOcclusion,
+                ReflectanceFactor = 0.5,
                 RenderAlbedoMap = false,
                 RenderNormalMap = false,
                 RenderRoughnessMetallicMap = false,
-
                 RenderEnvironmentMap = true,
-                EnableAutoTangent = true
+
+                EnableAutoTangent = false,
+                RenderDisplacementMap = false,
+                DisplacementMapScaleMask = CreateMappingSettingsVector()
             };
 
             DiscoverEnvironmentMaps();
             SelectedEnvironmentMap = FindDefaultEnvironmentMap() ?? AvailableEnvironmentMaps.FirstOrDefault();
 
-            IsSphereTransparent = false;
+            IsSphereTransparent = ForceOitPreviewPass;
         }
 
         public void ApplyPreview(MaterialPreviewFrame frame)
@@ -86,7 +135,7 @@ namespace SmartExchanger.ViewModels
             }
             // actualization on UI thread
             var dispatcher = Application.Current?.Dispatcher;
-            if ( dispatcher is not null && !dispatcher.CheckAccess() )
+            if (dispatcher is not null && !dispatcher.CheckAccess())
             {
                 dispatcher.BeginInvoke(new Action(() => ApplyPreview(frame)));
                 return;
@@ -96,7 +145,7 @@ namespace SmartExchanger.ViewModels
             TextureModel? albedoMap = CreateTexture(frame.BaseColorPng);
             SphereMaterial.AlbedoMap = albedoMap;
             SphereMaterial.RenderAlbedoMap = albedoMap is not null;
-            IsSphereTransparent = frame.IsTransparent;
+            IsSphereTransparent = ForceOitPreviewPass || frame.IsTransparent;
 
             TextureModel? normalMap = CreateTexture(frame.NormalPng);
             SphereMaterial.NormalMap = normalMap;
@@ -142,7 +191,7 @@ namespace SmartExchanger.ViewModels
             IEnumerable<string> mapFiles = Directory.EnumerateFiles(_environmentMapsDirectory, "*.dds", SearchOption.TopDirectoryOnly)
                 .OrderBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase);
 
-            foreach(string mapFilePath in mapFiles)
+            foreach (string mapFilePath in mapFiles)
             {
                 string displayName = CreateEnvironmentMapDisplayName(mapFilePath);
                 AvailableEnvironmentMaps.Add(new EnvironmentMapItem(displayName, mapFilePath));
@@ -154,8 +203,8 @@ namespace SmartExchanger.ViewModels
             {
                 return null;
             }
-            return AvailableEnvironmentMaps.FirstOrDefault(item => string.Equals(Path.GetFileName(item.FilePath), 
-                _options.DefaultEnvironmentMap, 
+            return AvailableEnvironmentMaps.FirstOrDefault(item => string.Equals(Path.GetFileName(item.FilePath),
+                _options.DefaultEnvironmentMap,
                 StringComparison.OrdinalIgnoreCase));
         }
         private static string CreateEnvironmentMapDisplayName(string filePath)
@@ -191,15 +240,55 @@ namespace SmartExchanger.ViewModels
                 TextureModel nextTexture = TextureModel.Create(value.FilePath) ?? throw new InvalidOperationException("HelixToolkit could not create the environment TextureModel.");
                 EnvironmentTexture = nextTexture;
                 SphereMaterial.RenderEnvironmentMap = true;
-                
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 EnvironmentTexture = null;
                 SphereMaterial.RenderEnvironmentMap = false;
                 Debug.WriteLine($"[Environment Maps] Could not load '{value.DisplayName}'. {ex}");
             }
         }
+
+        private void ApplyMappingSettings()
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+            SphereMaterial.DisplacementMapScaleMask = CreateMappingSettingsVector();
+        }
+
+        partial void OnSelectedMappingModeChanged(MaterialMappingMode value)
+        {
+            OnPropertyChanged(nameof(IsTriplanarMapping));
+            ApplyMappingSettings();
+        }
+
+        partial void OnTriplanarScaleChanged(double value)
+        {
+            ApplyMappingSettings();
+        }
+
+        partial void OnTriplanarBlendSharpnessChanged(double value)
+        {
+            ApplyMappingSettings();
+        }
+
+        partial void OnTriplanarNormalStrengthChanged(double value)
+        {
+            ApplyMappingSettings();
+        }
+
+        [RelayCommand]
+        private void ResetMappingSettings()
+        {
+            SelectedMappingMode = _options.DefaultMappingMode;
+            TriplanarScale = ClampTriplanarScale(_options.TriplanarScale);
+            TriplanarBlendSharpness = ClampBlendSharpness(_options.TriplanarBlendSharpness);
+            TriplanarNormalStrength = ClampNormalStrength(_options.TriplanarNormalStrength);
+        }
+
         public void Dispose()
         {
             if (_isDisposed)
@@ -228,6 +317,33 @@ namespace SmartExchanger.ViewModels
                 disposable.Dispose();
             }
             GC.SuppressFinalize(this);
+        }
+
+
+        private static double ClampTriplanarScale(double value)
+        {
+            return Math.Clamp(value, MinimumTriplanarScale, MaximumTriplanarScale);
+        }
+
+        private static double ClampBlendSharpness(double value)
+        {
+            return Math.Clamp(value, MinimumBlendSharpness, MaximumBlendSharpness);
+        }
+
+        private static double ClampNormalStrength(double value)
+        {
+            return Math.Clamp(value, MinimumNormalStrength, MaximumNormalStrength);
+        }
+
+        private Vector4 CreateMappingSettingsVector()
+        {
+            float mappingMode = SelectedMappingMode == MaterialMappingMode.Triplanar ? 1.0f : 0.0f;
+
+            return new Vector4(
+                (float)ClampTriplanarScale(TriplanarScale),
+                (float)ClampBlendSharpness(TriplanarBlendSharpness),
+                (float)ClampNormalStrength(TriplanarNormalStrength),
+                mappingMode);
         }
     }
 }
