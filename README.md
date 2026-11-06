@@ -48,6 +48,17 @@ material authoring tool.
 * Texture export to PNG, JPEG, and TIFF
 * Configurable rendering and preview settings through `appsettings.json`
 
+## Screenshots
+
+### Main Editor
+![Main_Editor](docs/img/full_view.png)
+
+### Texture Preivew
+![Texture_Preview](docs/img/tx_pre.png)
+
+### Material Preview
+![Material_Preview](docs/img/mat_pre.png)
+
 ## Available nodes
 
 ### Start nodes
